@@ -1,7 +1,7 @@
 import pytest
 import json
 from firepack.errors import MultiValidationError, ParamError
-from firepack.fields import IntField, StrField
+from firepack.fields import IntField, StrField, ListField
 from firepack.data import FireData
 
 
@@ -63,18 +63,26 @@ def test_nested_valid_conversion():
         a = IntField(required=True)
         b = Foo()
 
-    # When: valid init done
-    f = Foo()
-    f.a = 1
+    class Baz(FireData):
+        c = ListField(IntField())
+        d = Bar()
 
-    b = Bar()
-    b.a = 1
-    b.b = f
+    # When: valid init done
+    foo = Foo()
+    foo.a = 1
+
+    bar = Bar()
+    bar.a = 1
+    bar.b = foo
+
+    baz = Baz()
+    baz.c = [1, 2, 3]
+    baz.d = bar
 
     # Then: valid conversion to dict/json along with nested fields
-    val = {'a': 1, 'b': {'a': 1}}
-    assert b.to_dict() == val
-    assert b.to_json() == json.dumps(val)
+    val = {'c': [1, 2, 3], 'd': {'a': 1, 'b': {'a': 1}}}
+    assert baz.to_dict() == val
+    assert baz.to_json() == json.dumps(val)
 
 
 def test_nested_invalid_input_raises_error():
@@ -87,16 +95,16 @@ def test_nested_invalid_input_raises_error():
         b = Foo()
 
     # When: invalid init done
-    f = Foo()
-    f.a = 'a'
+    foo = Foo()
+    foo.a = 'a'
 
-    b = Bar()
-    b.a = 1
-    b.b = f
+    bar = Bar()
+    bar.a = 1
+    bar.b = foo
 
     # Then: raise error
     with pytest.raises(MultiValidationError):
-        b.validate()
+        bar.validate()
 
 
 def test_from_dict():
