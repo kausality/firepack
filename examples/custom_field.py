@@ -1,5 +1,5 @@
 from firepack.fields import StrField
-from firepack.errors import ValidationError
+from firepack.errors import ValidationError, MultiValidationError
 from firepack.service import FireService
 
 
@@ -7,7 +7,7 @@ class IDField(StrField):
     """A Field which takes input in the pattern xxx-yyy-zzz.
     """
     def default_validator(self, value):
-        # Use StringField validator to validate str
+        # Use StrField default validator to validate initial string
         super().default_validator(value)
         value = value.split('-')
         if len(value) != 3 or not all([len(v) == 3 for v in value]):
@@ -22,7 +22,12 @@ class Service(FireService):
 
 
 s = Service()
-s.call({
-    'user_id': 'foo-bar-baz'
-    }
-)
+
+try:
+    s.call({
+    'user_id': 'foo-bar'  # will throw exception, should be in form foo-bar-baz
+        }
+    )
+except MultiValidationError as ex:
+    for error in ex.errors:
+        print('%s: has error: %s' % (error.field, error.msg))
