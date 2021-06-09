@@ -161,8 +161,7 @@ s.call({
 
 ## Documentation
 
-View the Docs at: [https://kpchand.github.io/firepack/firepack/]().
-If the page fails to load, then directly go [here](https://kpchand.github.io/firepack/firepack/index.html).
+View the Docs [here](https://kpchand.github.io/firepack/firepack/index.html).
 
 
 ## What is a Service?
