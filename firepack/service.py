@@ -108,7 +108,7 @@ class FireService:
         Raise `SkipError` here to prevent the execution of `fire()`.
  
         Raises:
-            SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent execution based on some conditions.
+            SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent service execution based on some conditions.
         """
         pass
 
@@ -127,7 +127,7 @@ class FireService:
         Note: This method is never called if their was an error other than `SkipError`.
         
         Args:
-            fired (bool): Flag indication if `fire()` method was called.
-            exc (SkipError): Contains exception raised in `pre_fire()` or `fire()` methods otherwise None.
+            fired (bool): Flag indicating if `fire()` method was executed.
+            exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
         """
         pass

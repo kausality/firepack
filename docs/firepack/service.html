@@ -136,7 +136,7 @@ class FireService:
         Raise `SkipError` here to prevent the execution of `fire()`.
  
         Raises:
-            SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent execution based on some conditions.
+            SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent service execution based on some conditions.
         &#34;&#34;&#34;
         pass
 
@@ -155,8 +155,8 @@ class FireService:
         Note: This method is never called if their was an error other than `SkipError`.
         
         Args:
-            fired (bool): Flag indication if `fire()` method was called.
-            exc (SkipError): Contains exception raised in `pre_fire()` or `fire()` methods otherwise None.
+            fired (bool): Flag indicating if `fire()` method was executed.
+            exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
         &#34;&#34;&#34;
         pass</code></pre>
 </details>
@@ -308,7 +308,7 @@ SendWelcomeEmail.call({
         Raise `SkipError` here to prevent the execution of `fire()`.
  
         Raises:
-            SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent execution based on some conditions.
+            SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent service execution based on some conditions.
         &#34;&#34;&#34;
         pass
 
@@ -327,8 +327,8 @@ SendWelcomeEmail.call({
         Note: This method is never called if their was an error other than `SkipError`.
         
         Args:
-            fired (bool): Flag indication if `fire()` method was called.
-            exc (SkipError): Contains exception raised in `pre_fire()` or `fire()` methods otherwise None.
+            fired (bool): Flag indicating if `fire()` method was executed.
+            exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
         &#34;&#34;&#34;
         pass</code></pre>
 </details>
@@ -405,7 +405,7 @@ Raise <code>SkipError</code> here to prevent the execution of <code>fire()</code
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code>SkipError</code></dt>
-<dd>Raising this exception prevents the execution of <code>fire()</code> method. Usually used to prevent execution based on some conditions.</dd>
+<dd>Raising this exception prevents the execution of <code>fire()</code> method. Usually used to prevent service execution based on some conditions.</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -416,7 +416,7 @@ Raise <code>SkipError</code> here to prevent the execution of <code>fire()</code
     Raise `SkipError` here to prevent the execution of `fire()`.
 
     Raises:
-        SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent execution based on some conditions.
+        SkipError: Raising this exception prevents the execution of `fire()` method. Usually used to prevent service execution based on some conditions.
     &#34;&#34;&#34;
     pass</code></pre>
 </details>
@@ -454,9 +454,9 @@ Mostly used to perform cleanup or logging operations post Service execution.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>fired</code></strong> :&ensp;<code>bool</code></dt>
-<dd>Flag indication if <code>fire()</code> method was called.</dd>
+<dd>Flag indicating if <code>fire()</code> method was executed.</dd>
 <dt><strong><code>exc</code></strong> :&ensp;<code>SkipError</code></dt>
-<dd>Contains exception raised in <code>pre_fire()</code> or <code>fire()</code> methods otherwise None.</dd>
+<dd>Contains any exception raised in <code>pre_fire()</code> or <code>fire()</code> methods otherwise None.</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -469,8 +469,8 @@ Mostly used to perform cleanup or logging operations post Service execution.</p>
     Note: This method is never called if their was an error other than `SkipError`.
     
     Args:
-        fired (bool): Flag indication if `fire()` method was called.
-        exc (SkipError): Contains exception raised in `pre_fire()` or `fire()` methods otherwise None.
+        fired (bool): Flag indicating if `fire()` method was executed.
+        exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
     &#34;&#34;&#34;
     pass</code></pre>
 </details>
