@@ -7,14 +7,14 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='firepack',
-    version='1.0.0',
+    version='1.0.1',
     author='Kaustubh Pratap Chand',
     author_email='contact@kausalitylabs.com',
     description='FirePack is a minimalist Python library for creating services, data serialization and validation',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/kpchand/fireservice',
-    packages=setuptools.find_packages(where='firepack'),
+    packages=setuptools.find_packages(exclude=('tests',)),
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
