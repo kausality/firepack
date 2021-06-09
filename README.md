@@ -161,7 +161,7 @@ s.call({
 
 ## Documentation
 
-View the Docs at: https://kpchand.github.io/firepack/firepack.
+View the Docs at: [https://kpchand.github.io/firepack/firepack]().
 If the page fails to load, then directly go [here](https://kpchand.github.io/firepack/firepack/index.html).
 
 
