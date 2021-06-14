@@ -217,6 +217,25 @@ def test_from_json_unknown_field_when_not_exact_not_raises_error():
         pytest.fail('Should not raise ParamError')
 
 
+def test_inheritance():
+    # Given: inherited data class
+    class Foo(FireData):
+        a = IntField()
+
+    class Bar(Foo):
+        b = IntField()
+
+    # When: init using child class
+    bar = Bar()
+    bar.a = 1
+    bar.b = 2
+
+    # Then: have parent's field too
+    val = {'a': 1, 'b': 2}
+    assert bar.to_dict() == val
+
+
+
 
 
 

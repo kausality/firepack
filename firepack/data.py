@@ -125,7 +125,12 @@ class FireData:
     def _get_attrs(cls):
         def is_valid(obj):
             return isinstance(obj, Field) or isinstance(obj, FireData)
-        return [(name, obj) for name, obj in cls.__dict__.items() if is_valid(obj)]
+        attrs = []
+        for klass in cls.__mro__:
+            for name, obj in klass.__dict__.items():
+                if is_valid(obj):
+                    attrs.append((name, obj))
+        return attrs
 
     def validate(self):
         """Validates all declared attributes in this `FireData` instance.
