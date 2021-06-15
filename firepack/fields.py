@@ -36,7 +36,10 @@ class Field:
         """
 
     def __get__(self, instance, instance_type):
-        return instance.__dict__.get(self.name)
+        value = instance.__dict__.get(self.name)
+        if value is None:
+            value = self.options['default']
+        return value
 
     def __set__(self, instance, value):
         if value is None:
@@ -191,6 +194,28 @@ class DictField(Field):
     def default_validator(self, value):
         if not isinstance(value, dict):
             raise ValidationError(self.name, 'Not of dict type')
+
+
+class FireDataField(Field):
+    """`Field` which takes a `FireData` type.
+
+    Example:
+        ```python
+            class Foo(FireData):
+                a = IntField()
+
+            field = ListField(FireDataField(Foo))
+            # 'field' can now contain a list of 'Foo' instances.
+        ```
+    """
+    def __init__(self, data_class, **options):
+        super().__init__(**options)
+        self.data_class = data_class
+
+    def default_validator(self, value):
+        if not isinstance(value, self.data_class):
+            raise ValidationError(self.name, 'Not of %s type' % self.data_class)
+        value.validate()
 
 
 class ListField(Field):

@@ -1,5 +1,5 @@
 from firepack.fields import Field
-from firepack.errors import ValidationError, MultiValidationError, ParamError, SkipError, ModificationError
+from firepack.errors import ValidationError, MultiValidationError, ParamError, SkipError
 
 
 class FireService:
@@ -31,16 +31,6 @@ class FireService:
     })
     ```
     """
-    _MOD_TABLE_ = '_MOD_TABLE'
-
-    def __setattr__(self, name, value):
-        is_field_attr = (name in type(self).__dict__) and isinstance(type(self).__dict__[name], Field)
-        if self.__dict__[self._MOD_TABLE_].get(name) and is_field_attr:
-            raise ModificationError('Attempt to change field: %s' % name)
-        val = super().__setattr__(name, value)
-        self.__dict__[self._MOD_TABLE_][name] = True
-        return val
-
     def call(self, input_dict, exact=True, **kwargs):
         """This method should be called to start the execution of the Service.
 
@@ -57,9 +47,6 @@ class FireService:
         """
 
         assert isinstance(input_dict, dict), 'input_dict should be of type dict'
-
-        # Each invocation of call resets the modification table
-        self.__dict__[self._MOD_TABLE_] = dict()
         self._process_input(input_dict, exact)
         call_fire = True
         exc = None
@@ -88,7 +75,7 @@ class FireService:
         for name, desc_obj in fields:
             value = input_dict.get(name)
             # Make it an instance field so it can be accessed as normal python object properties
-            setattr(self, name, value)
+            desc_obj.__set__(self, value)
             try:
                 desc_obj._run_validation(value)
             except ValidationError as ex:

@@ -42,9 +42,3 @@ class ParamError(FirePackError):
 
 class DataError:
     pass
-
-
-class ModificationError(FirePackError):
-    """This error is raised when a field value is tried to be modified.
-    """
-

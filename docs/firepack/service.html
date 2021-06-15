@@ -27,7 +27,7 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">from firepack.fields import Field
-from firepack.errors import ValidationError, MultiValidationError, ParamError, SkipError, ModificationError
+from firepack.errors import ValidationError, MultiValidationError, ParamError, SkipError
 
 
 class FireService:
@@ -59,16 +59,6 @@ class FireService:
     })
     ```
     &#34;&#34;&#34;
-    _MOD_TABLE_ = &#39;_MOD_TABLE&#39;
-
-    def __setattr__(self, name, value):
-        is_field_attr = (name in type(self).__dict__) and isinstance(type(self).__dict__[name], Field)
-        if self.__dict__[self._MOD_TABLE_].get(name) and is_field_attr:
-            raise ModificationError(&#39;Attempt to change field: %s&#39; % name)
-        val = super().__setattr__(name, value)
-        self.__dict__[self._MOD_TABLE_][name] = True
-        return val
-
     def call(self, input_dict, exact=True, **kwargs):
         &#34;&#34;&#34;This method should be called to start the execution of the Service.
 
@@ -85,9 +75,6 @@ class FireService:
         &#34;&#34;&#34;
 
         assert isinstance(input_dict, dict), &#39;input_dict should be of type dict&#39;
-
-        # Each invocation of call resets the modification table
-        self.__dict__[self._MOD_TABLE_] = dict()
         self._process_input(input_dict, exact)
         call_fire = True
         exc = None
@@ -116,7 +103,7 @@ class FireService:
         for name, desc_obj in fields:
             value = input_dict.get(name)
             # Make it an instance field so it can be accessed as normal python object properties
-            setattr(self, name, value)
+            desc_obj.__set__(self, value)
             try:
                 desc_obj._run_validation(value)
             except ValidationError as ex:
@@ -231,16 +218,6 @@ SendWelcomeEmail.call({
     })
     ```
     &#34;&#34;&#34;
-    _MOD_TABLE_ = &#39;_MOD_TABLE&#39;
-
-    def __setattr__(self, name, value):
-        is_field_attr = (name in type(self).__dict__) and isinstance(type(self).__dict__[name], Field)
-        if self.__dict__[self._MOD_TABLE_].get(name) and is_field_attr:
-            raise ModificationError(&#39;Attempt to change field: %s&#39; % name)
-        val = super().__setattr__(name, value)
-        self.__dict__[self._MOD_TABLE_][name] = True
-        return val
-
     def call(self, input_dict, exact=True, **kwargs):
         &#34;&#34;&#34;This method should be called to start the execution of the Service.
 
@@ -257,9 +234,6 @@ SendWelcomeEmail.call({
         &#34;&#34;&#34;
 
         assert isinstance(input_dict, dict), &#39;input_dict should be of type dict&#39;
-
-        # Each invocation of call resets the modification table
-        self.__dict__[self._MOD_TABLE_] = dict()
         self._process_input(input_dict, exact)
         call_fire = True
         exc = None
@@ -288,7 +262,7 @@ SendWelcomeEmail.call({
         for name, desc_obj in fields:
             value = input_dict.get(name)
             # Make it an instance field so it can be accessed as normal python object properties
-            setattr(self, name, value)
+            desc_obj.__set__(self, value)
             try:
                 desc_obj._run_validation(value)
             except ValidationError as ex:
@@ -378,9 +352,6 @@ SendWelcomeEmail.call({
     &#34;&#34;&#34;
 
     assert isinstance(input_dict, dict), &#39;input_dict should be of type dict&#39;
-
-    # Each invocation of call resets the modification table
-    self.__dict__[self._MOD_TABLE_] = dict()
     self._process_input(input_dict, exact)
     call_fire = True
     exc = None

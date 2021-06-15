@@ -2,7 +2,7 @@ import pytest
 from firepack.validators import *
 from firepack.fields import *
 from firepack.errors import ValidationError
-
+from firepack.data import FireData
 
 FIELD_NAME = 'a'
 
@@ -12,6 +12,11 @@ def init_field_holder(field_instance):
         a = field_instance
 
     return FieldHolder()
+
+
+class Data(FireData):
+    a = IntField(required=True)
+    b = IntField(required=True)
 
 
 @pytest.mark.parametrize('field, value', [
@@ -25,6 +30,7 @@ def init_field_holder(field_instance):
     (DateTimeField(), datetime.now().date()),
     (DictField(), []),
     (EmailField(), 'aaa.com'),
+    (FireDataField(Data), 'a'),
     (ListField(StrField()), {})
 ])
 def test_default_validation_raises_error(field, value):
@@ -50,6 +56,7 @@ def test_default_validation_raises_error(field, value):
     DateTimeField(required=True),
     DictField(required=True),
     EmailField(required=True),
+    FireDataField(Data, required=True),
     ListField(StrField(required=True), required=True)
 ])
 def test_required_field_empty_raises_error(field):
@@ -264,3 +271,51 @@ def test_nested_list_violation_raises_error(field, value):
     # Then: raise error
     with pytest.raises(ValidationError):
         field._run_validation(value)
+
+
+def test_firedatafield_returns_valid_value():
+    # Given: a firedatafield
+    field = FireDataField(Data)
+    fh = init_field_holder(field)
+
+    # When: init with value
+    d = Data()
+    d.a = 100
+    setattr(fh, FIELD_NAME, d)
+
+    # Then: return that firedatafield instance
+    assert getattr(fh, FIELD_NAME) == d
+
+
+def test_firedatafield_inside_listfield_returns_valid_value():
+    # Given: firedatafield inside listfield
+    field = ListField(FireDataField(Data))
+    fh = init_field_holder(field)
+
+    # When: init
+    d = Data()
+    d.a = 100
+    value = [d]
+    setattr(fh, FIELD_NAME, value)
+
+    # Then: return list containing firedatafield instance
+    ret = getattr(fh, FIELD_NAME)
+    assert ret == value
+    assert ret[0] == d
+
+
+def test_firedatafield_inside_listfield_returns_default_value():
+    # Given: listfield with default value
+    d = Data()
+    d.a = 100
+    field = ListField(FireDataField(Data, required=True), default=[d])
+    fh = init_field_holder(field)
+
+    # When: init
+    setattr(fh, FIELD_NAME, None)
+
+    # Then: return list containing firedatafield
+    ret = getattr(fh, FIELD_NAME)
+    assert getattr(fh, FIELD_NAME) == [d]
+    assert ret[0] == d
+
