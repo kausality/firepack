@@ -297,7 +297,7 @@ def test_firedatafield_returns_default_value():
     # When: init with no value
     setattr(fh, FIELD_NAME, None)
 
-    # Then: return that firedatafield instance
+    # Then: return default firedata instance
     assert getattr(fh, FIELD_NAME) == d
 
 
