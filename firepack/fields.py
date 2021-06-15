@@ -36,10 +36,7 @@ class Field:
         """
 
     def __get__(self, instance, instance_type):
-        value = instance.__dict__.get(self.name)
-        if value is None:
-            value = self.options['default']
-        return value
+        return instance.__dict__.get(self.name)
 
     def __set__(self, instance, value):
         if value is None:

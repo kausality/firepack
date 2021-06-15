@@ -287,6 +287,20 @@ def test_firedatafield_returns_valid_value():
     assert getattr(fh, FIELD_NAME) == d
 
 
+def test_firedatafield_returns_default_value():
+    # Given: a firedatafield with default value
+    d = Data()
+    d.a = 100
+    field = FireDataField(Data, default=d)
+    fh = init_field_holder(field)
+
+    # When: init with no value
+    setattr(fh, FIELD_NAME, None)
+
+    # Then: return that firedatafield instance
+    assert getattr(fh, FIELD_NAME) == d
+
+
 def test_firedatafield_inside_listfield_returns_valid_value():
     # Given: firedatafield inside listfield
     field = ListField(FireDataField(Data))
