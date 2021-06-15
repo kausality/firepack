@@ -2,7 +2,7 @@
 
 FirePack is a minimalist Python library for creating services, data serialization and validation.
 
-* Declarative input fields with validation and immutability.
+* Declarative input fields with validation.
 * Service classes.
 * Works with native Python objects wherever possible.
 * Extensible with custom field types and validators.
@@ -62,9 +62,6 @@ crawler.call({
 
 # Values are stored in native python types wherever possible:
 print(type(crawler.user_id), type(crawler.page_name))  # <class 'int'> <class 'str'>
-
-# Raises ModificationError as all Fields are immutable
-crawler.user_id = 2 
 ```
 
 A slightly convoluted example to show nested field types:
