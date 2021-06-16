@@ -147,7 +147,10 @@ class FireData:
                 value.validate()
             else:  # field object
                 try:
-                    obj._run_validation(value)
+                    # obj is a descriptor so get the value which descriptor set in the instance class
+                    # also return default value if none set
+                    field_value = obj.__get__(self, type(self))
+                    obj._run_validation(field_value)
                 except ValidationError as ex:
                     errors.append(ex)
                 except SkipError:

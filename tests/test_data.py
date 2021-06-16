@@ -235,6 +235,30 @@ def test_inheritance():
     assert bar.to_dict() == val
 
 
+def test_invalid_default_value_raises_error():
+    # Given: given invalid default value
+    class Foo(FireData):
+        a = IntField(default='a')
+
+    # When: init without supplying any other value
+    foo = Foo()
+
+    # Then: throw error
+    with pytest.raises(MultiValidationError):
+        foo.validate()
+
+
+def test_returns_default_value():
+    # Given: valid default value given
+    class Foo(FireData):
+        a = IntField(default=1)
+
+    # When: init without supplying any other value
+    foo = Foo()
+
+    # Then: return value and successfully validate without any errors
+    assert foo.a == 1
+    foo.validate()
 
 
 
