@@ -74,6 +74,9 @@ class FireService:
         errors = []
         for name, desc_obj in fields:
             value = input_dict.get(name)
+            if value is None:
+                # Get the default value of the descriptor object
+                value = desc_obj.options['default']
             # Make it an instance field so it can be accessed as normal python object properties
             desc_obj.__set__(self, value)
             try:
