@@ -60,6 +60,37 @@ def test_validation_error():
     assert recorder.post_fire is None
 
 
+def test_error_inside_fire_is_raised():
+    recorder = RecordExec()
+
+    # Given: service class which skips execution
+    class Service(FireService):
+        @recorder.record
+        def pre_fire(self):
+            pass
+
+        @recorder.record
+        def fire(self, **kwargs):
+            raise Exception
+
+        @recorder.record
+        def post_fire(self, fired, exc):
+            pass
+
+    s = Service()
+    # When: service called
+    with pytest.raises(Exception):
+        s.call({
+        })
+
+    assert recorder.pre_fire is not None
+    assert recorder.fire is not None
+    assert recorder.post_fire is not None
+    args = recorder.post_fire['_args']
+    assert args[0] is True
+    assert args[1] is not None
+
+
 def test_skip_error():
     recorder = RecordExec()
 

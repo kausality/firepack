@@ -76,18 +76,20 @@ class FireService:
 
         assert isinstance(input_dict, dict), &#39;input_dict should be of type dict&#39;
         self._process_input(input_dict, exact)
-        call_fire = True
-        exc = None
-        return_value = None
         try:
             self.pre_fire()
         except SkipError as ex:
-            call_fire = False
-            exc = ex
-        if call_fire:
-            return_value = self.fire(**kwargs)
-        self.post_fire(call_fire, exc)
-        return return_value
+            self.post_fire(False, ex)
+            return
+
+        try:
+            ret_value = self.fire(**kwargs)
+        except Exception as ex:
+            self.post_fire(True, ex)
+            raise
+        else:
+            self.post_fire(True, None)
+            return ret_value
 
     def _process_input(self, input_dict, exact):
         # Get all Field descriptors in subclass
@@ -102,6 +104,9 @@ class FireService:
         errors = []
         for name, desc_obj in fields:
             value = input_dict.get(name)
+            if value is None:
+                # Get the default value of the descriptor object
+                value = desc_obj.options[&#39;default&#39;]
             # Make it an instance field so it can be accessed as normal python object properties
             desc_obj.__set__(self, value)
             try:
@@ -129,6 +134,7 @@ class FireService:
 
     def fire(self, **kwargs):
         &#34;&#34;&#34;The entry point of your Service. This method should be implemented in your Service.
+        Any exception raised inside this method will be re-raised after `post_fire` is called.
         
         Raises:
             NotImplementedError: Raised if subclass does not implement this method.
@@ -136,14 +142,12 @@ class FireService:
         raise NotImplementedError
 
     def post_fire(self, fired, exc):
-        &#34;&#34;&#34;Called after execution of `fire()` and also called if `fire()` execution was skipped in `pre_fire()`
-        Mostly used to perform cleanup or logging operations post Service execution.
+        &#34;&#34;&#34;Method called after execution of `fire`. Usable for logging/cleanup.
+        This method is always called even if an exception was raised inside `fire`.
 
-        Note: This method is never called if their was an error other than `SkipError`.
-        
         Args:
-            fired (bool): Flag indicating if `fire()` method was executed.
-            exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
+            fired (bool): `True` if `fire` was executed,`False` otherwise.
+            exc (Exception, optional): Any exception raised inside `fire`, `None` otherwise.
         &#34;&#34;&#34;
         pass</code></pre>
 </details>
@@ -235,18 +239,20 @@ SendWelcomeEmail.call({
 
         assert isinstance(input_dict, dict), &#39;input_dict should be of type dict&#39;
         self._process_input(input_dict, exact)
-        call_fire = True
-        exc = None
-        return_value = None
         try:
             self.pre_fire()
         except SkipError as ex:
-            call_fire = False
-            exc = ex
-        if call_fire:
-            return_value = self.fire(**kwargs)
-        self.post_fire(call_fire, exc)
-        return return_value
+            self.post_fire(False, ex)
+            return
+
+        try:
+            ret_value = self.fire(**kwargs)
+        except Exception as ex:
+            self.post_fire(True, ex)
+            raise
+        else:
+            self.post_fire(True, None)
+            return ret_value
 
     def _process_input(self, input_dict, exact):
         # Get all Field descriptors in subclass
@@ -261,6 +267,9 @@ SendWelcomeEmail.call({
         errors = []
         for name, desc_obj in fields:
             value = input_dict.get(name)
+            if value is None:
+                # Get the default value of the descriptor object
+                value = desc_obj.options[&#39;default&#39;]
             # Make it an instance field so it can be accessed as normal python object properties
             desc_obj.__set__(self, value)
             try:
@@ -288,6 +297,7 @@ SendWelcomeEmail.call({
 
     def fire(self, **kwargs):
         &#34;&#34;&#34;The entry point of your Service. This method should be implemented in your Service.
+        Any exception raised inside this method will be re-raised after `post_fire` is called.
         
         Raises:
             NotImplementedError: Raised if subclass does not implement this method.
@@ -295,14 +305,12 @@ SendWelcomeEmail.call({
         raise NotImplementedError
 
     def post_fire(self, fired, exc):
-        &#34;&#34;&#34;Called after execution of `fire()` and also called if `fire()` execution was skipped in `pre_fire()`
-        Mostly used to perform cleanup or logging operations post Service execution.
+        &#34;&#34;&#34;Method called after execution of `fire`. Usable for logging/cleanup.
+        This method is always called even if an exception was raised inside `fire`.
 
-        Note: This method is never called if their was an error other than `SkipError`.
-        
         Args:
-            fired (bool): Flag indicating if `fire()` method was executed.
-            exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
+            fired (bool): `True` if `fire` was executed,`False` otherwise.
+            exc (Exception, optional): Any exception raised inside `fire`, `None` otherwise.
         &#34;&#34;&#34;
         pass</code></pre>
 </details>
@@ -353,18 +361,20 @@ SendWelcomeEmail.call({
 
     assert isinstance(input_dict, dict), &#39;input_dict should be of type dict&#39;
     self._process_input(input_dict, exact)
-    call_fire = True
-    exc = None
-    return_value = None
     try:
         self.pre_fire()
     except SkipError as ex:
-        call_fire = False
-        exc = ex
-    if call_fire:
-        return_value = self.fire(**kwargs)
-    self.post_fire(call_fire, exc)
-    return return_value</code></pre>
+        self.post_fire(False, ex)
+        return
+
+    try:
+        ret_value = self.fire(**kwargs)
+    except Exception as ex:
+        self.post_fire(True, ex)
+        raise
+    else:
+        self.post_fire(True, None)
+        return ret_value</code></pre>
 </details>
 </dd>
 <dt id="firepack.service.FireService.pre_fire"><code class="name flex">
@@ -396,7 +406,8 @@ Raise <code>SkipError</code> here to prevent the execution of <code>fire()</code
 <span>def <span class="ident">fire</span></span>(<span>self, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>The entry point of your Service. This method should be implemented in your Service.</p>
+<div class="desc"><p>The entry point of your Service. This method should be implemented in your Service.
+Any exception raised inside this method will be re-raised after <code>post_fire</code> is called.</p>
 <h2 id="raises">Raises</h2>
 <dl>
 <dt><code>NotImplementedError</code></dt>
@@ -408,6 +419,7 @@ Raise <code>SkipError</code> here to prevent the execution of <code>fire()</code
 </summary>
 <pre><code class="python">def fire(self, **kwargs):
     &#34;&#34;&#34;The entry point of your Service. This method should be implemented in your Service.
+    Any exception raised inside this method will be re-raised after `post_fire` is called.
     
     Raises:
         NotImplementedError: Raised if subclass does not implement this method.
@@ -419,29 +431,26 @@ Raise <code>SkipError</code> here to prevent the execution of <code>fire()</code
 <span>def <span class="ident">post_fire</span></span>(<span>self, fired, exc)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Called after execution of <code>fire()</code> and also called if <code>fire()</code> execution was skipped in <code>pre_fire()</code>
-Mostly used to perform cleanup or logging operations post Service execution.</p>
-<p>Note: This method is never called if their was an error other than <code>SkipError</code>.</p>
+<div class="desc"><p>Method called after execution of <code>fire</code>. Usable for logging/cleanup.
+This method is always called even if an exception was raised inside <code>fire</code>.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>fired</code></strong> :&ensp;<code>bool</code></dt>
-<dd>Flag indicating if <code>fire()</code> method was executed.</dd>
-<dt><strong><code>exc</code></strong> :&ensp;<code>SkipError</code></dt>
-<dd>Contains any exception raised in <code>pre_fire()</code> or <code>fire()</code> methods otherwise None.</dd>
+<dd><code>True</code> if <code>fire</code> was executed,<code>False</code> otherwise.</dd>
+<dt><strong><code>exc</code></strong> :&ensp;<code>Exception</code>, optional</dt>
+<dd>Any exception raised inside <code>fire</code>, <code>None</code> otherwise.</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def post_fire(self, fired, exc):
-    &#34;&#34;&#34;Called after execution of `fire()` and also called if `fire()` execution was skipped in `pre_fire()`
-    Mostly used to perform cleanup or logging operations post Service execution.
+    &#34;&#34;&#34;Method called after execution of `fire`. Usable for logging/cleanup.
+    This method is always called even if an exception was raised inside `fire`.
 
-    Note: This method is never called if their was an error other than `SkipError`.
-    
     Args:
-        fired (bool): Flag indicating if `fire()` method was executed.
-        exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
+        fired (bool): `True` if `fire` was executed,`False` otherwise.
+        exc (Exception, optional): Any exception raised inside `fire`, `None` otherwise.
     &#34;&#34;&#34;
     pass</code></pre>
 </details>

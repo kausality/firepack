@@ -48,18 +48,20 @@ class FireService:
 
         assert isinstance(input_dict, dict), 'input_dict should be of type dict'
         self._process_input(input_dict, exact)
-        call_fire = True
-        exc = None
-        return_value = None
         try:
             self.pre_fire()
         except SkipError as ex:
-            call_fire = False
-            exc = ex
-        if call_fire:
-            return_value = self.fire(**kwargs)
-        self.post_fire(call_fire, exc)
-        return return_value
+            self.post_fire(False, ex)
+            return
+
+        try:
+            ret_value = self.fire(**kwargs)
+        except Exception as ex:
+            self.post_fire(True, ex)
+            raise
+        else:
+            self.post_fire(True, None)
+            return ret_value
 
     def _process_input(self, input_dict, exact):
         # Get all Field descriptors in subclass
@@ -104,6 +106,7 @@ class FireService:
 
     def fire(self, **kwargs):
         """The entry point of your Service. This method should be implemented in your Service.
+        Any exception raised inside this method will be re-raised after `post_fire` is called.
         
         Raises:
             NotImplementedError: Raised if subclass does not implement this method.
@@ -111,13 +114,11 @@ class FireService:
         raise NotImplementedError
 
     def post_fire(self, fired, exc):
-        """Called after execution of `fire()` and also called if `fire()` execution was skipped in `pre_fire()`
-        Mostly used to perform cleanup or logging operations post Service execution.
+        """Method called after execution of `fire`. Usable for logging/cleanup.
+        This method is always called even if an exception was raised inside `fire`.
 
-        Note: This method is never called if their was an error other than `SkipError`.
-        
         Args:
-            fired (bool): Flag indicating if `fire()` method was executed.
-            exc (SkipError): Contains any exception raised in `pre_fire()` or `fire()` methods otherwise None.
+            fired (bool): `True` if `fire` was executed,`False` otherwise.
+            exc (Exception, optional): Any exception raised inside `fire`, `None` otherwise.
         """
         pass
