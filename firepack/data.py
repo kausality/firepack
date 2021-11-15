@@ -1,6 +1,6 @@
 import json
 from firepack.fields import Field
-from firepack.errors import SkipError, ValidationError, MultiValidationError, ParamError
+from firepack.errors import FirePackError, SkipError, ValidationError, MultiValidationError, ParamError
 
 
 class FireData:
@@ -67,6 +67,24 @@ class FireData:
             dct[name] = value
         self.validate()
         return dct
+
+    @classmethod
+    def load_from(cls, data):
+        """Takes a data value and converts it into a `FireData` instance.
+
+        Args:
+            data: A data value. Can be of `str`(json), `dict` or `FireData` type.
+
+        Returns:
+            `FireData`: Initialized `FireData` instance.
+        """
+        if isinstance(data, dict):
+            return cls.from_dict(data)
+        if isinstance(data, str):
+            return cls.from_json(data)
+        if isinstance(data, FireData):
+            return cls.from_dict(data.to_dict())
+        raise FirePackError('Need a valid type which is either str, dict or of `FireData` type')
 
     @classmethod
     def from_json(cls, json_data, exact=True):

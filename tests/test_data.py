@@ -1,6 +1,6 @@
 import pytest
 import json
-from firepack.errors import MultiValidationError, ParamError
+from firepack.errors import FirePackError, MultiValidationError, ParamError
 from firepack.fields import IntField, StrField, ListField
 from firepack.data import FireData
 
@@ -215,6 +215,39 @@ def test_from_json_unknown_field_when_not_exact_not_raises_error():
         Foo.from_json(json.dumps(val), exact=False)
     except ParamError:
         pytest.fail('Should not raise ParamError')
+
+
+def test_load_from():
+    # Given: data
+    class Foo(FireData):
+        a = IntField(required=True)
+
+    # When: valid dict given
+    val = {'a': 1}
+    obj = Foo.load_from(val)
+
+    # Then: init fields
+    assert obj.a == 1
+
+    # When: valid json str given
+    val = {'a': 1}
+    obj = Foo.load_from(json.dumps(val))
+
+    # Then: init fields
+    assert obj.a == 1
+
+
+def test_load_from_when_invalid_data_type_raises_error():
+    # Given: data
+    class Foo(FireData):
+        a = IntField(required=True)
+
+    # When: invalid data type given
+    data = 10
+
+    # Then: raise error
+    with pytest.raises(FirePackError):
+        Foo.load_from(data)
 
 
 def test_inheritance():
