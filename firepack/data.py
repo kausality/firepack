@@ -158,3 +158,11 @@ class FireData:
         if errors:
             raise MultiValidationError(errors)
 
+    def __str__(self):
+        attrs = self._get_attrs()
+        s = ''
+        for name, obj in attrs:
+            value = self.__dict__.get(name)
+            s += '%s=%s' % (name, value) + ' | '
+        return s
+
