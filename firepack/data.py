@@ -104,7 +104,6 @@ class FireData:
         assert isinstance(json_data, str), 'JSON should be of type str'
         dct_data = json.loads(json_data)
         obj = cls._load_data_from_dict(dct_data, exact)
-        obj.validate()
         return obj
 
     @classmethod
@@ -120,7 +119,6 @@ class FireData:
         """
 
         obj = cls._load_data_from_dict(data_dict, exact)
-        obj.validate()
         return obj
 
     @classmethod
