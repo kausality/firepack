@@ -28,7 +28,7 @@
 </summary>
 <pre><code class="python">import json
 from firepack.fields import Field
-from firepack.errors import SkipError, ValidationError, MultiValidationError, ParamError
+from firepack.errors import FirePackError, SkipError, ValidationError, MultiValidationError, ParamError
 
 
 class FireData:
@@ -97,7 +97,25 @@ class FireData:
         return dct
 
     @classmethod
-    def from_json(cls, json_data, exact=True):
+    def load(cls, data):
+        &#34;&#34;&#34;Takes a data value and converts it into a `FireData` instance.
+
+        Args:
+            data: A data value. Can be of `str`(json), `dict` or `FireData` type.
+
+        Returns:
+            `FireData`: Initialized `FireData` instance.
+        &#34;&#34;&#34;
+        if isinstance(data, dict):
+            return cls.load_dict(data)
+        if isinstance(data, str):
+            return cls.load_json(data)
+        if isinstance(data, FireData):
+            return cls.load_dict(data.to_dict())
+        raise FirePackError(&#39;Need a valid type which is either str, dict or of `FireData` type&#39;)
+
+    @classmethod
+    def load_json(cls, json_data, exact=True):
         &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key&#39;s value.
 
         Args:
@@ -114,11 +132,10 @@ class FireData:
         assert isinstance(json_data, str), &#39;JSON should be of type str&#39;
         dct_data = json.loads(json_data)
         obj = cls._load_data_from_dict(dct_data, exact)
-        obj.validate()
         return obj
 
     @classmethod
-    def from_dict(cls, data_dict, exact=True):
+    def load_dict(cls, data_dict, exact=True):
         &#34;&#34;&#34;Takes a `dict` and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding `dict` key&#39;s value.
 
         Args:
@@ -130,7 +147,6 @@ class FireData:
         &#34;&#34;&#34;
 
         obj = cls._load_data_from_dict(data_dict, exact)
-        obj.validate()
         return obj
 
     @classmethod
@@ -144,7 +160,7 @@ class FireData:
             if exact and name not in attrs_names:
                 raise ParamError(name)
             if isinstance(value, dict):
-                value = cls.__dict__[name].from_json(value)
+                value = cls.__dict__[name].load_json(value)
             setattr(obj, name, value)
             # should validate using field ??
         return obj
@@ -184,7 +200,15 @@ class FireData:
                 except SkipError:
                     pass
         if errors:
-            raise MultiValidationError(errors)</code></pre>
+            raise MultiValidationError(errors)
+
+    def __str__(self):
+        attrs = self._get_attrs()
+        s = &#39;&#39;
+        for name, obj in attrs:
+            value = self.__dict__.get(name)
+            s += &#39;%s=%s&#39; % (name, value) + &#39; | &#39;
+        return s</code></pre>
 </details>
 </section>
 <section>
@@ -292,7 +316,25 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
         return dct
 
     @classmethod
-    def from_json(cls, json_data, exact=True):
+    def load(cls, data):
+        &#34;&#34;&#34;Takes a data value and converts it into a `FireData` instance.
+
+        Args:
+            data: A data value. Can be of `str`(json), `dict` or `FireData` type.
+
+        Returns:
+            `FireData`: Initialized `FireData` instance.
+        &#34;&#34;&#34;
+        if isinstance(data, dict):
+            return cls.load_dict(data)
+        if isinstance(data, str):
+            return cls.load_json(data)
+        if isinstance(data, FireData):
+            return cls.load_dict(data.to_dict())
+        raise FirePackError(&#39;Need a valid type which is either str, dict or of `FireData` type&#39;)
+
+    @classmethod
+    def load_json(cls, json_data, exact=True):
         &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key&#39;s value.
 
         Args:
@@ -309,11 +351,10 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
         assert isinstance(json_data, str), &#39;JSON should be of type str&#39;
         dct_data = json.loads(json_data)
         obj = cls._load_data_from_dict(dct_data, exact)
-        obj.validate()
         return obj
 
     @classmethod
-    def from_dict(cls, data_dict, exact=True):
+    def load_dict(cls, data_dict, exact=True):
         &#34;&#34;&#34;Takes a `dict` and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding `dict` key&#39;s value.
 
         Args:
@@ -325,7 +366,6 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
         &#34;&#34;&#34;
 
         obj = cls._load_data_from_dict(data_dict, exact)
-        obj.validate()
         return obj
 
     @classmethod
@@ -339,7 +379,7 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
             if exact and name not in attrs_names:
                 raise ParamError(name)
             if isinstance(value, dict):
-                value = cls.__dict__[name].from_json(value)
+                value = cls.__dict__[name].load_json(value)
             setattr(obj, name, value)
             # should validate using field ??
         return obj
@@ -379,12 +419,55 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
                 except SkipError:
                     pass
         if errors:
-            raise MultiValidationError(errors)</code></pre>
+            raise MultiValidationError(errors)
+
+    def __str__(self):
+        attrs = self._get_attrs()
+        s = &#39;&#39;
+        for name, obj in attrs:
+            value = self.__dict__.get(name)
+            s += &#39;%s=%s&#39; % (name, value) + &#39; | &#39;
+        return s</code></pre>
 </details>
 <h3>Static methods</h3>
 <dl>
-<dt id="firepack.data.FireData.from_json"><code class="name flex">
-<span>def <span class="ident">from_json</span></span>(<span>json_data, exact=True)</span>
+<dt id="firepack.data.FireData.load"><code class="name flex">
+<span>def <span class="ident">load</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes a data value and converts it into a <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>data</code></strong></dt>
+<dd>A data value. Can be of <code>str</code>(json), <code>dict</code> or <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> type.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p><code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code>: Initialized <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def load(cls, data):
+    &#34;&#34;&#34;Takes a data value and converts it into a `FireData` instance.
+
+    Args:
+        data: A data value. Can be of `str`(json), `dict` or `FireData` type.
+
+    Returns:
+        `FireData`: Initialized `FireData` instance.
+    &#34;&#34;&#34;
+    if isinstance(data, dict):
+        return cls.load_dict(data)
+    if isinstance(data, str):
+        return cls.load_json(data)
+    if isinstance(data, FireData):
+        return cls.load_dict(data.to_dict())
+    raise FirePackError(&#39;Need a valid type which is either str, dict or of `FireData` type&#39;)</code></pre>
+</details>
+</dd>
+<dt id="firepack.data.FireData.load_json"><code class="name flex">
+<span>def <span class="ident">load_json</span></span>(<span>json_data, exact=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Takes a JSON string and converts it into a <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance with each declare<code>Field</code> attribute value mapping to corresponding JSON key's value.</p>
@@ -407,7 +490,7 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@classmethod
-def from_json(cls, json_data, exact=True):
+def load_json(cls, json_data, exact=True):
     &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key&#39;s value.
 
     Args:
@@ -424,12 +507,11 @@ def from_json(cls, json_data, exact=True):
     assert isinstance(json_data, str), &#39;JSON should be of type str&#39;
     dct_data = json.loads(json_data)
     obj = cls._load_data_from_dict(dct_data, exact)
-    obj.validate()
     return obj</code></pre>
 </details>
 </dd>
-<dt id="firepack.data.FireData.from_dict"><code class="name flex">
-<span>def <span class="ident">from_dict</span></span>(<span>data_dict, exact=True)</span>
+<dt id="firepack.data.FireData.load_dict"><code class="name flex">
+<span>def <span class="ident">load_dict</span></span>(<span>data_dict, exact=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Takes a <code>dict</code> and converts it into a <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance with each declare<code>Field</code> attribute value mapping to corresponding <code>dict</code> key's value.</p>
@@ -447,7 +529,7 @@ def from_json(cls, json_data, exact=True):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@classmethod
-def from_dict(cls, data_dict, exact=True):
+def load_dict(cls, data_dict, exact=True):
     &#34;&#34;&#34;Takes a `dict` and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding `dict` key&#39;s value.
 
     Args:
@@ -459,7 +541,6 @@ def from_dict(cls, data_dict, exact=True):
     &#34;&#34;&#34;
 
     obj = cls._load_data_from_dict(data_dict, exact)
-    obj.validate()
     return obj</code></pre>
 </details>
 </dd>
@@ -590,9 +671,10 @@ For ex: <code>fire_data_instance.to_json(indent=4)</code></p>
 <ul>
 <li>
 <h4><code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code></h4>
-<ul class="">
-<li><code><a title="firepack.data.FireData.from_json" href="#firepack.data.FireData.from_json">from_json</a></code></li>
-<li><code><a title="firepack.data.FireData.from_dict" href="#firepack.data.FireData.from_dict">from_dict</a></code></li>
+<ul class="two-column">
+<li><code><a title="firepack.data.FireData.load" href="#firepack.data.FireData.load">load</a></code></li>
+<li><code><a title="firepack.data.FireData.load_json" href="#firepack.data.FireData.load_json">load_json</a></code></li>
+<li><code><a title="firepack.data.FireData.load_dict" href="#firepack.data.FireData.load_dict">load_dict</a></code></li>
 <li><code><a title="firepack.data.FireData.to_json" href="#firepack.data.FireData.to_json">to_json</a></code></li>
 <li><code><a title="firepack.data.FireData.to_dict" href="#firepack.data.FireData.to_dict">to_dict</a></code></li>
 <li><code><a title="firepack.data.FireData.validate" href="#firepack.data.FireData.validate">validate</a></code></li>

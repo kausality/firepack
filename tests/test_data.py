@@ -107,20 +107,20 @@ def test_nested_invalid_input_raises_error():
         bar.validate()
 
 
-def test_from_dict():
+def test_load_dict():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
 
     # When: valid input given
     val = {'a': 1}
-    obj = Foo.from_dict(val)
+    obj = Foo.load_dict(val)
 
     # Then: init fields
     assert obj.a == 1
 
 
-def test_from_dict_invalid_input_raises_error():
+def test_load_dict_invalid_input_raises_error():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
@@ -130,10 +130,10 @@ def test_from_dict_invalid_input_raises_error():
 
     # Then: raise error
     with pytest.raises(AssertionError):
-        Foo.from_dict(input_val)
+        Foo.load_dict(input_val)
 
 
-def test_from_dict_unknown_field_when_exact_raises_error():
+def test_load_dict_unknown_field_when_exact_raises_error():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
@@ -143,10 +143,10 @@ def test_from_dict_unknown_field_when_exact_raises_error():
 
     # Then: raise error
     with pytest.raises(ParamError):
-        Foo.from_dict(val)
+        Foo.load_dict(val)
 
 
-def test_from_dict_unknown_field_when_not_exact_not_raises_error():
+def test_load_dict_unknown_field_when_not_exact_not_raises_error():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
@@ -156,25 +156,25 @@ def test_from_dict_unknown_field_when_not_exact_not_raises_error():
 
     # Then: not raise error
     try:
-        Foo.from_dict(val, exact=False)
+        Foo.load_dict(val, exact=False)
     except ParamError:
         pytest.fail('Should not raise ParamError')
 
 
-def test_from_json():
+def test_load_json():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
 
     # When: valid input json given
     val = {'a': 1}
-    obj = Foo.from_json(json.dumps(val))
+    obj = Foo.load_json(json.dumps(val))
 
     # Then: init fields
     assert obj.a == 1
 
 
-def test_from_json_invalid_input_raises_error():
+def test_load_json_invalid_input_raises_error():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
@@ -186,10 +186,10 @@ def test_from_json_invalid_input_raises_error():
 
     # Then: raise error
     with pytest.raises(AssertionError):
-        Foo.from_json(input_val)
+        Foo.load_json(input_val)
 
 
-def test_from_json_unknown_field_when_exact_raises_error():
+def test_load_json_unknown_field_when_exact_raises_error():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
@@ -199,10 +199,10 @@ def test_from_json_unknown_field_when_exact_raises_error():
 
     # Then: raise error
     with pytest.raises(ParamError):
-        Foo.from_json(json.dumps(val), exact=True)
+        Foo.load_json(json.dumps(val), exact=True)
 
 
-def test_from_json_unknown_field_when_not_exact_not_raises_error():
+def test_load_json_unknown_field_when_not_exact_not_raises_error():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
@@ -212,32 +212,32 @@ def test_from_json_unknown_field_when_not_exact_not_raises_error():
 
     # Then: not raise error
     try:
-        Foo.from_json(json.dumps(val), exact=False)
+        Foo.load_json(json.dumps(val), exact=False)
     except ParamError:
         pytest.fail('Should not raise ParamError')
 
 
-def test_load_from():
+def test_load():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
 
     # When: valid dict given
     val = {'a': 1}
-    obj = Foo.load_from(val)
+    obj = Foo.load(val)
 
     # Then: init fields
     assert obj.a == 1
 
     # When: valid json str given
     val = {'a': 1}
-    obj = Foo.load_from(json.dumps(val))
+    obj = Foo.load(json.dumps(val))
 
     # Then: init fields
     assert obj.a == 1
 
 
-def test_load_from_when_invalid_data_type_raises_error():
+def test_load_when_invalid_data_type_raises_error():
     # Given: data
     class Foo(FireData):
         a = IntField(required=True)
@@ -247,7 +247,7 @@ def test_load_from_when_invalid_data_type_raises_error():
 
     # Then: raise error
     with pytest.raises(FirePackError):
-        Foo.load_from(data)
+        Foo.load(data)
 
 
 def test_inheritance():

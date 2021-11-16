@@ -69,7 +69,7 @@ class FireData:
         return dct
 
     @classmethod
-    def load_from(cls, data):
+    def load(cls, data):
         """Takes a data value and converts it into a `FireData` instance.
 
         Args:
@@ -79,15 +79,15 @@ class FireData:
             `FireData`: Initialized `FireData` instance.
         """
         if isinstance(data, dict):
-            return cls.from_dict(data)
+            return cls.load_dict(data)
         if isinstance(data, str):
-            return cls.from_json(data)
+            return cls.load_json(data)
         if isinstance(data, FireData):
-            return cls.from_dict(data.to_dict())
+            return cls.load_dict(data.to_dict())
         raise FirePackError('Need a valid type which is either str, dict or of `FireData` type')
 
     @classmethod
-    def from_json(cls, json_data, exact=True):
+    def load_json(cls, json_data, exact=True):
         """Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key's value.
 
         Args:
@@ -107,7 +107,7 @@ class FireData:
         return obj
 
     @classmethod
-    def from_dict(cls, data_dict, exact=True):
+    def load_dict(cls, data_dict, exact=True):
         """Takes a `dict` and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding `dict` key's value.
 
         Args:
@@ -132,7 +132,7 @@ class FireData:
             if exact and name not in attrs_names:
                 raise ParamError(name)
             if isinstance(value, dict):
-                value = cls.__dict__[name].from_json(value)
+                value = cls.__dict__[name].load_json(value)
             setattr(obj, name, value)
             # should validate using field ??
         return obj

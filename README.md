@@ -174,3 +174,11 @@ Services are a part of the domain model which performs some business logic. Usua
 Some reading resources :
 * https://en.wikipedia.org/wiki/Service_layer_pattern
 * https://www.martinfowler.com/bliki/AnemicDomainModel.html
+
+
+## Contributing
+
+To generate docs use:
+```angular2html 
+pdoc3 --html -f -c sort_identifiers=False --output-dir docs firepack
+```
