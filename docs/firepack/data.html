@@ -98,7 +98,7 @@ class FireData:
 
     @classmethod
     def load(cls, data):
-        &#34;&#34;&#34;Takes a data value and converts it into a `FireData` instance.
+        &#34;&#34;&#34;Takes a data value in either string or dict format and converts it into a `FireData` instance.
 
         Args:
             data: A data value. Can be of `str`(json), `dict` or `FireData` type.
@@ -116,7 +116,7 @@ class FireData:
 
     @classmethod
     def load_json(cls, json_data, exact=True):
-        &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key&#39;s value.
+        &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declared `Field` attribute value mapping to corresponding JSON key&#39;s value.
 
         Args:
             json_data (str): JSON string.
@@ -317,7 +317,7 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
 
     @classmethod
     def load(cls, data):
-        &#34;&#34;&#34;Takes a data value and converts it into a `FireData` instance.
+        &#34;&#34;&#34;Takes a data value in either string or dict format and converts it into a `FireData` instance.
 
         Args:
             data: A data value. Can be of `str`(json), `dict` or `FireData` type.
@@ -335,7 +335,7 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
 
     @classmethod
     def load_json(cls, json_data, exact=True):
-        &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key&#39;s value.
+        &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declared `Field` attribute value mapping to corresponding JSON key&#39;s value.
 
         Args:
             json_data (str): JSON string.
@@ -435,7 +435,7 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
 <span>def <span class="ident">load</span></span>(<span>data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Takes a data value and converts it into a <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance.</p>
+<div class="desc"><p>Takes a data value in either string or dict format and converts it into a <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>data</code></strong></dt>
@@ -449,7 +449,7 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
 </summary>
 <pre><code class="python">@classmethod
 def load(cls, data):
-    &#34;&#34;&#34;Takes a data value and converts it into a `FireData` instance.
+    &#34;&#34;&#34;Takes a data value in either string or dict format and converts it into a `FireData` instance.
 
     Args:
         data: A data value. Can be of `str`(json), `dict` or `FireData` type.
@@ -470,7 +470,7 @@ def load(cls, data):
 <span>def <span class="ident">load_json</span></span>(<span>json_data, exact=True)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Takes a JSON string and converts it into a <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance with each declare<code>Field</code> attribute value mapping to corresponding JSON key's value.</p>
+<div class="desc"><p>Takes a JSON string and converts it into a <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance with each declared <code>Field</code> attribute value mapping to corresponding JSON key's value.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>json_data</code></strong> :&ensp;<code>str</code></dt>
@@ -491,7 +491,7 @@ def load(cls, data):
 </summary>
 <pre><code class="python">@classmethod
 def load_json(cls, json_data, exact=True):
-    &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key&#39;s value.
+    &#34;&#34;&#34;Takes a JSON string and converts it into a `FireData` instance with each declared `Field` attribute value mapping to corresponding JSON key&#39;s value.
 
     Args:
         json_data (str): JSON string.

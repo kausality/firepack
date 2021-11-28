@@ -70,7 +70,7 @@ class FireData:
 
     @classmethod
     def load(cls, data):
-        """Takes a data value and converts it into a `FireData` instance.
+        """Takes a data value in either string or dict format and converts it into a `FireData` instance.
 
         Args:
             data: A data value. Can be of `str`(json), `dict` or `FireData` type.
@@ -88,7 +88,7 @@ class FireData:
 
     @classmethod
     def load_json(cls, json_data, exact=True):
-        """Takes a JSON string and converts it into a `FireData` instance with each declare`Field` attribute value mapping to corresponding JSON key's value.
+        """Takes a JSON string and converts it into a `FireData` instance with each declared `Field` attribute value mapping to corresponding JSON key's value.
 
         Args:
             json_data (str): JSON string.
