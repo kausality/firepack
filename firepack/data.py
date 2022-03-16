@@ -31,11 +31,21 @@ class FireData:
     ```
     """
 
+    def __new__(cls, *args, **kwargs):
+        # Initializes fields with default values
+        # Otherwise field value if not set returns default values only if accessed
+        instance = super(FireData, cls).__new__(cls, *args, **kwargs)
+        attrs = instance._get_attrs()
+        for name, obj in attrs:
+            if isinstance(obj, Field):
+                instance.__setattr__(name, obj.options['default'])
+        return instance
+
     def __setattr__(self, name, value):
         self.__dict__[name] = value
 
     def __getattr__(self, name):
-        return self.__dict__.get(name)
+        self.__dict__.get(name)
 
     def to_json(self, **kwargs):
         """Converts `FireData` instance to a JSON string.
