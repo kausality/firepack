@@ -1,5 +1,5 @@
 import json
-from firepack.fields import Field
+from firepack.fields import Field, DictField
 from firepack.errors import FirePackError, SkipError, ValidationError, MultiValidationError, ParamError
 
 
@@ -34,12 +34,19 @@ class FireData:
     def __new__(cls, *args, **kwargs):
         # Initializes fields with default values
         # Otherwise field value if not set returns default values only if accessed
-        instance = super(FireData, cls).__new__(cls, *args, **kwargs)
+        # This setting of default values is not required in services because the call method takes care of it
+        # by initializing fields which sets the field to provided value or the default if not provided
+        instance = super(FireData, cls).__new__(cls)
+        if kwargs.get('required'):
+            instance.required = kwargs['required']
         attrs = instance._get_attrs()
         for name, obj in attrs:
             if isinstance(obj, Field):
                 instance.__setattr__(name, obj.options['default'])
         return instance
+
+    def __init__(self, required=True):
+        self.required = required
 
     def __setattr__(self, name, value):
         self.__dict__[name] = value
@@ -136,13 +143,19 @@ class FireData:
         assert isinstance(data, dict), 'Should be of dict type'
 
         attrs = cls._get_attrs()
+        attrs_map = {i[0]: i[1] for i in attrs}  # dict: {attr_name: attr object(Field/FireData object)}
         attrs_names = [name for name, _ in attrs]
         obj = cls()
         for name, value in data.items():
             if exact and name not in attrs_names:
                 raise ParamError(name)
-            if isinstance(value, dict):
-                value = cls.__dict__[name].load_json(value)
+            elif isinstance(value, dict) and isinstance(attrs_map[name], FireData):
+                # load dict value as that mapping to a FireData class
+                value = cls.__dict__[name].load(value)
+            elif isinstance(value, dict) and isinstance(attrs_map[name], DictField):
+                pass  # just keep value
+            else:
+                FirePackError('Cannot load attribute: %s with value: %s' % (name, value))
             setattr(obj, name, value)
             # should validate using field ??
         return obj
@@ -169,7 +182,9 @@ class FireData:
         errors = []
         for name, obj in attrs:
             value = self.__dict__.get(name)
-            if isinstance(value, FireData):
+            if isinstance(obj, FireData) and value is None:
+                errors.append(ValidationError(name, 'FireData attribute not initialized'))
+            elif isinstance(value, FireData):
                 value.validate()
             else:  # field object
                 try:

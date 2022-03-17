@@ -1,7 +1,7 @@
 import pytest
 import json
 from firepack.errors import FirePackError, MultiValidationError, ParamError
-from firepack.fields import IntField, StrField, ListField
+from firepack.fields import IntField, StrField, ListField, DictField
 from firepack.data import FireData
 
 
@@ -85,6 +85,31 @@ def test_nested_valid_conversion():
     assert baz.to_json() == json.dumps(val)
 
 
+def test_nested_valid_load():
+    # Given: nested FireData classes
+    class Foo(FireData):
+        foo_a = IntField()
+        foo_b = StrField()
+
+    class Bar(FireData):
+        bar_a = DictField()
+        bar_b = Foo()
+
+    class Baz(FireData):
+        baz_a = ListField(IntField())
+        baz_b = Bar()
+
+    # When: loading from dict
+    val = {'baz_a': [1, 2, 3], 'baz_b': {'bar_a': {'a': 'bar_a'}, 'bar_b': {'foo_a': 1, 'foo_b': 'foo_b'}}}
+    baz = Baz.load(val)
+
+    # Then: fields properly initialized
+    assert baz.baz_a == [1, 2, 3]
+    assert baz.baz_b.bar_a == {'a': 'bar_a'}
+    assert baz.baz_b.bar_b.foo_a == 1
+    assert baz.baz_b.bar_b.foo_b == 'foo_b'
+
+
 def test_nested_invalid_input_raises_error():
     # Given: nested data classes
     class Foo(FireData):
@@ -115,6 +140,19 @@ def test_load_dict():
     # When: valid input given
     val = {'a': 1}
     obj = Foo.load_dict(val)
+
+    # Then: init fields
+    assert obj.a == 1
+
+
+def test_load_json():
+    # Given: data
+    class Foo(FireData):
+        a = IntField(required=True)
+
+    # When: valid input json given
+    val = {'a': 1}
+    obj = Foo.load_json(json.dumps(val))
 
     # Then: init fields
     assert obj.a == 1
@@ -159,19 +197,6 @@ def test_load_dict_unknown_field_when_not_exact_not_raises_error():
         Foo.load_dict(val, exact=False)
     except ParamError:
         pytest.fail('Should not raise ParamError')
-
-
-def test_load_json():
-    # Given: data
-    class Foo(FireData):
-        a = IntField(required=True)
-
-    # When: valid input json given
-    val = {'a': 1}
-    obj = Foo.load_json(json.dumps(val))
-
-    # Then: init fields
-    assert obj.a == 1
 
 
 def test_load_json_invalid_input_raises_error():
@@ -276,7 +301,7 @@ def test_invalid_default_value_raises_error():
     # When: init without supplying any other value
     foo = Foo()
 
-    # Then: throw error
+    # Then: raise error
     with pytest.raises(MultiValidationError):
         foo.validate()
 
@@ -292,6 +317,26 @@ def test_returns_default_value():
     # Then: return value and successfully validate without any errors
     assert foo.a == 1
     foo.validate()
+
+
+def test_nested_field_when_not_set_raises_error():
+    # Given: nested FireData field in Bar
+    class Foo(FireData):
+        a = IntField(default=1)
+
+    class Bar(FireData):
+        b = Foo()
+
+    # When: init without setting FireData field b
+    bar = Bar()
+
+    # Then: raise error
+    with pytest.raises(MultiValidationError):
+        bar.validate()
+
+
+
+
 
 
 

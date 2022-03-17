@@ -108,7 +108,8 @@ class StrField(Field):
     def default_validator(self, value):
         if not isinstance(value, str):
             raise ValidationError(self.name, 'Not of str type')
-        validator = validators.length(min_length=self.options.get('min_length'), max_length=self.options.get('max_length'))
+        validator = validators.length(min_length=self.options.get('min_length'),
+                                      max_length=self.options.get('max_length'))
         validator(self.name, value)
 
 
@@ -126,7 +127,8 @@ class NumericField(Field):
     def default_validator(self, value):
         if not isinstance(value, numbers.Number):
             raise ValidationError(self.name, 'Not of numeric type')
-        validator = validators.interval(min_value=self.options.get('min_value'), max_value=self.options.get('max_value'))
+        validator = validators.interval(min_value=self.options.get('min_value'),
+                                        max_value=self.options.get('max_value'))
         validator(self.name, value)
 
 
