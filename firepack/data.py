@@ -202,8 +202,16 @@ class FireData:
     def __str__(self):
         attrs = self._get_attrs()
         s = ''
+        i = 0
         for name, obj in attrs:
+            if i >= 1:
+                s += ' '
             value = self.__dict__.get(name)
-            s += '%s=%s' % (name, value) + ' | '
+            if isinstance(value, FireData):
+                fmt_str = '%s=[%s]'
+            else:
+                fmt_str = '%s=%s'
+            s += fmt_str % (name, value)
+            i += 1
         return s
 
