@@ -45,9 +45,6 @@ class FireData:
                 instance.__setattr__(name, obj.options['default'])
         return instance
 
-    def __init__(self, required=True):
-        self.required = required
-
     def __setattr__(self, name, value):
         self.__dict__[name] = value
 
