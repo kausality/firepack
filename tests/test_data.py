@@ -322,13 +322,28 @@ def test_returns_default_value():
     foo.validate()
 
 
-def test_nested_field_when_not_set_raises_error():
+def test_not_required_nested_field_when_not_set_not_raises_error():
     # Given: nested FireData field in Bar
     class Foo(FireData):
         a = IntField(default=1)
 
     class Bar(FireData):
-        b = Foo()
+        b = Foo(required=False)
+
+    # When: init without setting FireData field b
+    bar = Bar()
+
+    # Then: do not raise error
+    bar.validate()
+
+
+def test_required_nested_field_when_not_set_raises_error():
+    # Given: nested FireData field in Bar
+    class Foo(FireData):
+        a = IntField(default=1)
+
+    class Bar(FireData):
+        b = Foo(required=True)
 
     # When: init without setting FireData field b
     bar = Bar()
