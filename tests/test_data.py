@@ -119,7 +119,7 @@ def test_nested_invalid_input_raises_error():
         a = IntField(required=True)
         b = Foo()
 
-    # When: invalid init done
+    # When: invalid init done using str value for IntField
     foo = Foo()
     foo.a = 'a'
 
@@ -315,7 +315,10 @@ def test_returns_default_value():
     foo = Foo()
 
     # Then: return value and successfully validate without any errors
-    assert foo.a == 1
+    # Here checking directly into dict because accessing attr with dot will auto set by calling descriptor
+    # And we won't have the default value initialized if we never accessed it which defeats the purpose
+    # For ex: in case where we initialized some attrs and expected non-initialized ones to have their default value
+    assert foo.__dict__['a'] == 1
     foo.validate()
 
 

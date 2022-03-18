@@ -45,6 +45,9 @@ class FireData:
                 instance.__setattr__(name, obj.options['default'])
         return instance
 
+    def __init__(self, required=True):
+        self.required = required
+
     def __setattr__(self, name, value):
         self.__dict__[name] = value
 
@@ -179,8 +182,14 @@ class FireData:
         errors = []
         for name, obj in attrs:
             value = self.__dict__.get(name)
-            if isinstance(obj, FireData) and value is None:
-                errors.append(ValidationError(name, 'FireData attribute not initialized'))
+            if isinstance(obj, FireData):
+                if obj.required and value is None:
+                    errors.append(ValidationError(name, 'FireData attribute not initialized'))
+                elif value is not None:
+                    value.validate()
+                elif value is None:
+                    # just let it be None
+                    pass
             elif isinstance(value, FireData):
                 value.validate()
             else:  # field object
