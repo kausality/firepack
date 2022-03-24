@@ -32,6 +32,8 @@ from datetime import date, datetime
 from firepack import validators
 from firepack.errors import SkipError, ValidationError
 
+_null = object()
+
 
 class Field:
     &#34;&#34;&#34;Base class for all `Field` types.
@@ -39,11 +41,11 @@ class Field:
     Raises:
         ValidationError: Raised when `Field` value fails validation.
     &#34;&#34;&#34; 
-    def __init__(self, required=True, default=None, validators=[], **options):
+    def __init__(self, required=True, default=_null, validators=[], **options):
         &#34;&#34;&#34;
         Args:
             required (object, optional): Determine whether a value for `Field` is required.
-            default (object, optional): Instantiate `Field` with this value. Defaults to None.
+            default (object, optional): Instantiate `Field` with this default value.
             validators (list, optional): A list of validators to apply. 
             Validators are functions with signature: `validator(name, value)` where `name` is `Field` attribute name and `value` is the provided value.
         &#34;&#34;&#34;
@@ -65,8 +67,8 @@ class Field:
 
     def __get__(self, instance, instance_type):
         value = instance.__dict__.get(self.name)
-        if value is None:
-            value = self.options[&#39;default&#39;]
+        if value is _null:
+            return None
         return value
 
     def __set__(self, instance, value):
@@ -75,10 +77,10 @@ class Field:
         instance.__dict__[self.name] = value
 
     def _run_validation(self, value):
-        if self.options[&#39;required&#39;] is True and value is None:
-            raise ValidationError(self.name, &#39;Required field cannot be empty&#39;)
-        if self.options[&#39;required&#39;] is False and value is None:
-            raise SkipError
+        if self.options[&#39;required&#39;] is True and value is _null:
+            raise ValidationError(self.name, &#39;Required field not set&#39;)
+        if self.options[&#39;required&#39;] is False and (value is None or value is _null):
+            return
         self.default_validator(value)
         for validator in self.options[&#39;validators&#39;]:
             validator(self.name, value)
@@ -136,7 +138,8 @@ class StrField(Field):
     def default_validator(self, value):
         if not isinstance(value, str):
             raise ValidationError(self.name, &#39;Not of str type&#39;)
-        validator = validators.length(min_length=self.options.get(&#39;min_length&#39;), max_length=self.options.get(&#39;max_length&#39;))
+        validator = validators.length(min_length=self.options.get(&#39;min_length&#39;),
+                                      max_length=self.options.get(&#39;max_length&#39;))
         validator(self.name, value)
 
 
@@ -154,7 +157,8 @@ class NumericField(Field):
     def default_validator(self, value):
         if not isinstance(value, numbers.Number):
             raise ValidationError(self.name, &#39;Not of numeric type&#39;)
-        validator = validators.interval(min_value=self.options.get(&#39;min_value&#39;), max_value=self.options.get(&#39;max_value&#39;))
+        validator = validators.interval(min_value=self.options.get(&#39;min_value&#39;),
+                                        max_value=self.options.get(&#39;max_value&#39;))
         validator(self.name, value)
 
 
@@ -301,7 +305,7 @@ class ListField(Field):
 <dl>
 <dt id="firepack.fields.Field"><code class="flex name class">
 <span>class <span class="ident">Field</span></span>
-<span>(</span><span>required=True, default=None, validators=[], **options)</span>
+<span>(</span><span>required=True, default=&lt;object object&gt;, validators=[], **options)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Base class for all <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> types.</p>
@@ -315,7 +319,7 @@ class ListField(Field):
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>
@@ -330,11 +334,11 @@ class ListField(Field):
     Raises:
         ValidationError: Raised when `Field` value fails validation.
     &#34;&#34;&#34; 
-    def __init__(self, required=True, default=None, validators=[], **options):
+    def __init__(self, required=True, default=_null, validators=[], **options):
         &#34;&#34;&#34;
         Args:
             required (object, optional): Determine whether a value for `Field` is required.
-            default (object, optional): Instantiate `Field` with this value. Defaults to None.
+            default (object, optional): Instantiate `Field` with this default value.
             validators (list, optional): A list of validators to apply. 
             Validators are functions with signature: `validator(name, value)` where `name` is `Field` attribute name and `value` is the provided value.
         &#34;&#34;&#34;
@@ -356,8 +360,8 @@ class ListField(Field):
 
     def __get__(self, instance, instance_type):
         value = instance.__dict__.get(self.name)
-        if value is None:
-            value = self.options[&#39;default&#39;]
+        if value is _null:
+            return None
         return value
 
     def __set__(self, instance, value):
@@ -366,10 +370,10 @@ class ListField(Field):
         instance.__dict__[self.name] = value
 
     def _run_validation(self, value):
-        if self.options[&#39;required&#39;] is True and value is None:
-            raise ValidationError(self.name, &#39;Required field cannot be empty&#39;)
-        if self.options[&#39;required&#39;] is False and value is None:
-            raise SkipError
+        if self.options[&#39;required&#39;] is True and value is _null:
+            raise ValidationError(self.name, &#39;Required field not set&#39;)
+        if self.options[&#39;required&#39;] is False and (value is None or value is _null):
+            return
         self.default_validator(value)
         for validator in self.options[&#39;validators&#39;]:
             validator(self.name, value)
@@ -460,7 +464,7 @@ class ListField(Field):
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>
@@ -505,7 +509,7 @@ class ListField(Field):
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>
@@ -573,7 +577,8 @@ class ListField(Field):
     def default_validator(self, value):
         if not isinstance(value, str):
             raise ValidationError(self.name, &#39;Not of str type&#39;)
-        validator = validators.length(min_length=self.options.get(&#39;min_length&#39;), max_length=self.options.get(&#39;max_length&#39;))
+        validator = validators.length(min_length=self.options.get(&#39;min_length&#39;),
+                                      max_length=self.options.get(&#39;max_length&#39;))
         validator(self.name, value)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -622,7 +627,8 @@ class ListField(Field):
     def default_validator(self, value):
         if not isinstance(value, numbers.Number):
             raise ValidationError(self.name, &#39;Not of numeric type&#39;)
-        validator = validators.interval(min_value=self.options.get(&#39;min_value&#39;), max_value=self.options.get(&#39;max_value&#39;))
+        validator = validators.interval(min_value=self.options.get(&#39;min_value&#39;),
+                                        max_value=self.options.get(&#39;max_value&#39;))
         validator(self.name, value)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -729,7 +735,7 @@ class ListField(Field):
 </dd>
 <dt id="firepack.fields.DateField"><code class="flex name class">
 <span>class <span class="ident">DateField</span></span>
-<span>(</span><span>required=True, default=None, validators=[], **options)</span>
+<span>(</span><span>required=True, default=&lt;object object&gt;, validators=[], **options)</span>
 </code></dt>
 <dd>
 <div class="desc"><p><code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> which takes a <code>date</code> type</p>
@@ -738,7 +744,7 @@ class ListField(Field):
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>
@@ -780,7 +786,7 @@ class ListField(Field):
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>
@@ -827,7 +833,7 @@ There is no fool-proof way to confirm a valid email unless an email is sent at t
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>
@@ -873,7 +879,7 @@ There is no fool-proof way to confirm a valid email unless an email is sent at t
 </dd>
 <dt id="firepack.fields.DictField"><code class="flex name class">
 <span>class <span class="ident">DictField</span></span>
-<span>(</span><span>required=True, default=None, validators=[], **options)</span>
+<span>(</span><span>required=True, default=&lt;object object&gt;, validators=[], **options)</span>
 </code></dt>
 <dd>
 <div class="desc"><p><code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> which takes a <code>dict</code> type.</p>
@@ -882,7 +888,7 @@ There is no fool-proof way to confirm a valid email unless an email is sent at t
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>
@@ -931,7 +937,7 @@ There is no fool-proof way to confirm a valid email unless an email is sent at t
 <dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
 <dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
 <dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this value. Defaults to None.</dd>
+<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
 <dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
 <dd>A list of validators to apply. </dd>
 </dl>

@@ -22,7 +22,7 @@ class RecordExec:
         return self.__dict__.get(name)
 
 
-def test_validation_error():
+def test_validation_error_when_constraints_not_matched():
     recorder = RecordExec()
 
     # Given: a service class with field constraints
@@ -51,10 +51,47 @@ def test_validation_error():
     }
 
     # Then: raise error
-    with pytest.raises(MultiValidationError) as ex:
+    with pytest.raises(MultiValidationError) as e:
         s.call(input_dict)
-        assert len(ex.errors) == 2
-        assert all([isinstance(e, ValidationError) for e in ex.errors])
+        assert len(e.errors) == 2
+        assert all([isinstance(e, ValidationError) for err in e.errors])
+    assert recorder.pre_fire is None
+    assert recorder.fire is None
+    assert recorder.post_fire is None
+
+
+def test_validation_error_when_required_field_not_set():
+    recorder = RecordExec()
+
+    # Given: a service class with required values
+    class Service(FireService):
+        a = IntField(required=True)
+        b = IntField(required=True)
+
+        @recorder.record
+        def pre_fire(self):
+            pass
+
+        @recorder.record
+        def fire(self, **kwargs):
+            pass
+
+        @recorder.record
+        def post_fire(self, fired, exc):
+            pass
+
+    s = Service()
+
+    # When: given input with no value
+    input_dict = {
+    }
+
+    # Then: raise error
+    with pytest.raises(MultiValidationError) as e:
+        s.call(input_dict)
+        assert len(e.errors) == 2
+        assert all([isinstance(e, ValidationError) for err in e.errors])
+
     assert recorder.pre_fire is None
     assert recorder.fire is None
     assert recorder.post_fire is None

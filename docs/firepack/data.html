@@ -27,7 +27,8 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import json
-from firepack.fields import Field
+from firepack.fields import _null
+from firepack.fields import Field, DictField
 from firepack.errors import FirePackError, SkipError, ValidationError, MultiValidationError, ParamError
 
 
@@ -44,7 +45,7 @@ class FireData:
 
     class BarData(FireData):
         a = IntField()
-        b = FooData()
+        b = FooData()  # as a nested attribute
 
 
     f = FooData()
@@ -59,40 +60,84 @@ class FireData:
     ```
     &#34;&#34;&#34;
 
+    def __new__(cls, *args, **kwargs):
+        # Initializes fields with default values
+        # Otherwise field value if not set returns default values only if accessed
+        # This setting of default values is not required in services because the call method takes care of it
+        # by initializing fields which sets the field to provided value or the default if not provided
+        instance = super(FireData, cls).__new__(cls)
+        if kwargs.get(&#39;required&#39;):
+            instance.__required = kwargs[&#39;required&#39;]
+        attrs = instance._get_attrs()
+        for name, obj in attrs:
+            if isinstance(obj, Field):
+                print(&#39;new: &#39;, name, obj.options[&#39;default&#39;])
+                instance.__setattr__(name, obj.options[&#39;default&#39;])
+        return instance
+
+    def __init__(self, required=True):
+        &#34;&#34;&#34;
+        Args:
+            required (bool, optional): If set to true then nested `FireData` field is required to be set. Defaults to True.
+        &#34;&#34;&#34;
+        self.__required = required
+
     def __setattr__(self, name, value):
+        print(&#39;setattr: name, value&#39;, name, value)
         self.__dict__[name] = value
 
     def __getattr__(self, name):
-        return self.__dict__.get(name)
+        self.__dict__.get(name)
 
-    def to_json(self, **kwargs):
-        &#34;&#34;&#34;Converts `FireData` instance to a JSON string.
+    def to_json(self, contain_unset=False, **kwargs):
+        &#34;&#34;&#34;&#34;Converts `FireData` instance to a JSON string.
 
-        Note: You can pass keyword arguments which maps to the arguments of python std lib method ```json.dumps()```.
-        For ex: ```fire_data_instance.to_json(indent=4)```
+        Args:
+            contain_unset (bool, optional): If set to True then fields not set will also be included. Defaults to False.
+            See the example below for `to_dict`.
 
         Returns:
             str: JSON string.
         &#34;&#34;&#34;
 
-        dct_data = self.to_dict()
+        dct_data = self.to_dict(contain_unset=contain_unset)
         return json.dumps(dct_data, **kwargs)
 
-    def to_dict(self):
+    def to_dict(self, contain_unset=False):
         &#34;&#34;&#34;Converts `FireData` instance to a `dict`.
 
+        Args:
+            contain_unset (bool, optional): If set to True then fields not set will also be included. Defaults to False.
+
         Returns:
-            dict: Dictionary mapping each `Field` in the instance.
+            dict: Dictionary with key as the `Field` name and value as the `Field` value.
+        
+        Example:
+            ```python
+            class Foo(FireData):
+                a = IntField(required=True)
+                b = IntField(required=False)
+
+            f = Foo()
+            f.a = 1
+            print(f.to_dict(contain_unset=True))  # {&#39;a&#39;: 1, &#39;b&#39;: None}
+            print(f.to_dict(contain_unset=False)) # {&#39;a&#39;: 1} 
+            ```
+                
         &#34;&#34;&#34;
 
         dct = dict()
         attrs = self._get_attrs()
         for name, obj in attrs:
-            value = getattr(self, name)
+            # accessing dict directly is important otherwise if getattr is used, it will call field descriptor __get__
+            # which returns None for _null values
+            value = self.__dict__[name]
             if isinstance(obj, FireData):
                 value.validate()
                 value = value.to_dict()
-            dct[name] = value
+            if (value is _null and contain_unset) or (value is not _null):
+                value = None if value is _null else value
+                dct[name] = value
         self.validate()
         return dct
 
@@ -154,13 +199,19 @@ class FireData:
         assert isinstance(data, dict), &#39;Should be of dict type&#39;
 
         attrs = cls._get_attrs()
+        attrs_map = {i[0]: i[1] for i in attrs}  # dict: {attr_name: attr object(Field/FireData object)}
         attrs_names = [name for name, _ in attrs]
         obj = cls()
         for name, value in data.items():
             if exact and name not in attrs_names:
                 raise ParamError(name)
-            if isinstance(value, dict):
-                value = cls.__dict__[name].load_json(value)
+            elif isinstance(value, dict) and isinstance(attrs_map[name], FireData):
+                # load dict value as that mapping to a FireData class
+                value = cls.__dict__[name].load(value)
+            elif isinstance(value, dict) and isinstance(attrs_map[name], DictField):
+                pass  # just keep value
+            else:
+                FirePackError(&#39;Cannot load attribute: %s with value: %s&#39; % (name, value))
             setattr(obj, name, value)
             # should validate using field ??
         return obj
@@ -187,7 +238,15 @@ class FireData:
         errors = []
         for name, obj in attrs:
             value = self.__dict__.get(name)
-            if isinstance(value, FireData):
+            if isinstance(obj, FireData):
+                if obj.__required and value is None:
+                    errors.append(ValidationError(name, &#39;FireData attribute not initialized&#39;))
+                elif value is not None:
+                    value.validate()
+                elif value is None:
+                    # just let it be None
+                    pass
+            elif isinstance(value, FireData):
                 value.validate()
             else:  # field object
                 try:
@@ -205,9 +264,18 @@ class FireData:
     def __str__(self):
         attrs = self._get_attrs()
         s = &#39;&#39;
+        i = 0
         for name, obj in attrs:
+            if i &gt;= 1:
+                s += &#39; &#39;
             value = self.__dict__.get(name)
-            s += &#39;%s=%s&#39; % (name, value) + &#39; | &#39;
+            if value is not _null:
+                if isinstance(value, FireData):
+                    fmt_str = &#39;%s=[%s]&#39;
+                else:
+                    fmt_str = &#39;%s=%s&#39;
+                s += fmt_str % (name, value)
+                i += 1
         return s</code></pre>
 </details>
 </section>
@@ -222,6 +290,7 @@ class FireData:
 <dl>
 <dt id="firepack.data.FireData"><code class="flex name class">
 <span>class <span class="ident">FireData</span></span>
+<span>(</span><span>required=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Class which provides support for object serialization and converting complex datatypes to and from python native datatypes.
@@ -233,7 +302,7 @@ This can be visualized as a structure with support for nesting and validation.</
 
 class BarData(FireData):
     a = IntField()
-    b = FooData()
+    b = FooData()  # as a nested attribute
 
 
 f = FooData()
@@ -245,7 +314,12 @@ b.b = f
 
 ret = b.to_dict()
 print(ret)  # {'a': 2, 'b': {'a': 1}}
-</code></pre></div>
+</code></pre>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>required</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>If set to true then nested <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> field is required to be set. Defaults to True.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -263,7 +337,7 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
 
     class BarData(FireData):
         a = IntField()
-        b = FooData()
+        b = FooData()  # as a nested attribute
 
 
     f = FooData()
@@ -278,40 +352,84 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
     ```
     &#34;&#34;&#34;
 
+    def __new__(cls, *args, **kwargs):
+        # Initializes fields with default values
+        # Otherwise field value if not set returns default values only if accessed
+        # This setting of default values is not required in services because the call method takes care of it
+        # by initializing fields which sets the field to provided value or the default if not provided
+        instance = super(FireData, cls).__new__(cls)
+        if kwargs.get(&#39;required&#39;):
+            instance.__required = kwargs[&#39;required&#39;]
+        attrs = instance._get_attrs()
+        for name, obj in attrs:
+            if isinstance(obj, Field):
+                print(&#39;new: &#39;, name, obj.options[&#39;default&#39;])
+                instance.__setattr__(name, obj.options[&#39;default&#39;])
+        return instance
+
+    def __init__(self, required=True):
+        &#34;&#34;&#34;
+        Args:
+            required (bool, optional): If set to true then nested `FireData` field is required to be set. Defaults to True.
+        &#34;&#34;&#34;
+        self.__required = required
+
     def __setattr__(self, name, value):
+        print(&#39;setattr: name, value&#39;, name, value)
         self.__dict__[name] = value
 
     def __getattr__(self, name):
-        return self.__dict__.get(name)
+        self.__dict__.get(name)
 
-    def to_json(self, **kwargs):
-        &#34;&#34;&#34;Converts `FireData` instance to a JSON string.
+    def to_json(self, contain_unset=False, **kwargs):
+        &#34;&#34;&#34;&#34;Converts `FireData` instance to a JSON string.
 
-        Note: You can pass keyword arguments which maps to the arguments of python std lib method ```json.dumps()```.
-        For ex: ```fire_data_instance.to_json(indent=4)```
+        Args:
+            contain_unset (bool, optional): If set to True then fields not set will also be included. Defaults to False.
+            See the example below for `to_dict`.
 
         Returns:
             str: JSON string.
         &#34;&#34;&#34;
 
-        dct_data = self.to_dict()
+        dct_data = self.to_dict(contain_unset=contain_unset)
         return json.dumps(dct_data, **kwargs)
 
-    def to_dict(self):
+    def to_dict(self, contain_unset=False):
         &#34;&#34;&#34;Converts `FireData` instance to a `dict`.
 
+        Args:
+            contain_unset (bool, optional): If set to True then fields not set will also be included. Defaults to False.
+
         Returns:
-            dict: Dictionary mapping each `Field` in the instance.
+            dict: Dictionary with key as the `Field` name and value as the `Field` value.
+        
+        Example:
+            ```python
+            class Foo(FireData):
+                a = IntField(required=True)
+                b = IntField(required=False)
+
+            f = Foo()
+            f.a = 1
+            print(f.to_dict(contain_unset=True))  # {&#39;a&#39;: 1, &#39;b&#39;: None}
+            print(f.to_dict(contain_unset=False)) # {&#39;a&#39;: 1} 
+            ```
+                
         &#34;&#34;&#34;
 
         dct = dict()
         attrs = self._get_attrs()
         for name, obj in attrs:
-            value = getattr(self, name)
+            # accessing dict directly is important otherwise if getattr is used, it will call field descriptor __get__
+            # which returns None for _null values
+            value = self.__dict__[name]
             if isinstance(obj, FireData):
                 value.validate()
                 value = value.to_dict()
-            dct[name] = value
+            if (value is _null and contain_unset) or (value is not _null):
+                value = None if value is _null else value
+                dct[name] = value
         self.validate()
         return dct
 
@@ -373,13 +491,19 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
         assert isinstance(data, dict), &#39;Should be of dict type&#39;
 
         attrs = cls._get_attrs()
+        attrs_map = {i[0]: i[1] for i in attrs}  # dict: {attr_name: attr object(Field/FireData object)}
         attrs_names = [name for name, _ in attrs]
         obj = cls()
         for name, value in data.items():
             if exact and name not in attrs_names:
                 raise ParamError(name)
-            if isinstance(value, dict):
-                value = cls.__dict__[name].load_json(value)
+            elif isinstance(value, dict) and isinstance(attrs_map[name], FireData):
+                # load dict value as that mapping to a FireData class
+                value = cls.__dict__[name].load(value)
+            elif isinstance(value, dict) and isinstance(attrs_map[name], DictField):
+                pass  # just keep value
+            else:
+                FirePackError(&#39;Cannot load attribute: %s with value: %s&#39; % (name, value))
             setattr(obj, name, value)
             # should validate using field ??
         return obj
@@ -406,7 +530,15 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
         errors = []
         for name, obj in attrs:
             value = self.__dict__.get(name)
-            if isinstance(value, FireData):
+            if isinstance(obj, FireData):
+                if obj.__required and value is None:
+                    errors.append(ValidationError(name, &#39;FireData attribute not initialized&#39;))
+                elif value is not None:
+                    value.validate()
+                elif value is None:
+                    # just let it be None
+                    pass
+            elif isinstance(value, FireData):
                 value.validate()
             else:  # field object
                 try:
@@ -424,9 +556,18 @@ print(ret)  # {'a': 2, 'b': {'a': 1}}
     def __str__(self):
         attrs = self._get_attrs()
         s = &#39;&#39;
+        i = 0
         for name, obj in attrs:
+            if i &gt;= 1:
+                s += &#39; &#39;
             value = self.__dict__.get(name)
-            s += &#39;%s=%s&#39; % (name, value) + &#39; | &#39;
+            if value is not _null:
+                if isinstance(value, FireData):
+                    fmt_str = &#39;%s=[%s]&#39;
+                else:
+                    fmt_str = &#39;%s=%s&#39;
+                s += fmt_str % (name, value)
+                i += 1
         return s</code></pre>
 </details>
 <h3>Static methods</h3>
@@ -548,12 +689,16 @@ def load_dict(cls, data_dict, exact=True):
 <h3>Methods</h3>
 <dl>
 <dt id="firepack.data.FireData.to_json"><code class="name flex">
-<span>def <span class="ident">to_json</span></span>(<span>self, **kwargs)</span>
+<span>def <span class="ident">to_json</span></span>(<span>self, contain_unset=False, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Converts <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance to a JSON string.</p>
-<p>Note: You can pass keyword arguments which maps to the arguments of python std lib method <code>json.dumps()</code>.
-For ex: <code>fire_data_instance.to_json(indent=4)</code></p>
+<div class="desc"><p>"Converts <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance to a JSON string.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>contain_unset</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>If set to True then fields not set will also be included. Defaults to False.</dd>
+</dl>
+<p>See the example below for <code>to_dict</code>.</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>str</code></dt>
@@ -563,49 +708,85 @@ For ex: <code>fire_data_instance.to_json(indent=4)</code></p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def to_json(self, **kwargs):
-    &#34;&#34;&#34;Converts `FireData` instance to a JSON string.
+<pre><code class="python">def to_json(self, contain_unset=False, **kwargs):
+    &#34;&#34;&#34;&#34;Converts `FireData` instance to a JSON string.
 
-    Note: You can pass keyword arguments which maps to the arguments of python std lib method ```json.dumps()```.
-    For ex: ```fire_data_instance.to_json(indent=4)```
+    Args:
+        contain_unset (bool, optional): If set to True then fields not set will also be included. Defaults to False.
+        See the example below for `to_dict`.
 
     Returns:
         str: JSON string.
     &#34;&#34;&#34;
 
-    dct_data = self.to_dict()
+    dct_data = self.to_dict(contain_unset=contain_unset)
     return json.dumps(dct_data, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="firepack.data.FireData.to_dict"><code class="name flex">
-<span>def <span class="ident">to_dict</span></span>(<span>self)</span>
+<span>def <span class="ident">to_dict</span></span>(<span>self, contain_unset=False)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Converts <code><a title="firepack.data.FireData" href="#firepack.data.FireData">FireData</a></code> instance to a <code>dict</code>.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>contain_unset</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>If set to True then fields not set will also be included. Defaults to False.</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>dict</code></dt>
-<dd>Dictionary mapping each <code>Field</code> in the instance.</dd>
-</dl></div>
+<dd>Dictionary with key as the <code>Field</code> name and value as the <code>Field</code> value.</dd>
+</dl>
+<h2 id="example">Example</h2>
+<pre><code class="language-python">class Foo(FireData):
+    a = IntField(required=True)
+    b = IntField(required=False)
+
+f = Foo()
+f.a = 1
+print(f.to_dict(contain_unset=True))  # {'a': 1, 'b': None}
+print(f.to_dict(contain_unset=False)) # {'a': 1} 
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def to_dict(self):
+<pre><code class="python">def to_dict(self, contain_unset=False):
     &#34;&#34;&#34;Converts `FireData` instance to a `dict`.
 
+    Args:
+        contain_unset (bool, optional): If set to True then fields not set will also be included. Defaults to False.
+
     Returns:
-        dict: Dictionary mapping each `Field` in the instance.
+        dict: Dictionary with key as the `Field` name and value as the `Field` value.
+    
+    Example:
+        ```python
+        class Foo(FireData):
+            a = IntField(required=True)
+            b = IntField(required=False)
+
+        f = Foo()
+        f.a = 1
+        print(f.to_dict(contain_unset=True))  # {&#39;a&#39;: 1, &#39;b&#39;: None}
+        print(f.to_dict(contain_unset=False)) # {&#39;a&#39;: 1} 
+        ```
+            
     &#34;&#34;&#34;
 
     dct = dict()
     attrs = self._get_attrs()
     for name, obj in attrs:
-        value = getattr(self, name)
+        # accessing dict directly is important otherwise if getattr is used, it will call field descriptor __get__
+        # which returns None for _null values
+        value = self.__dict__[name]
         if isinstance(obj, FireData):
             value.validate()
             value = value.to_dict()
-        dct[name] = value
+        if (value is _null and contain_unset) or (value is not _null):
+            value = None if value is _null else value
+            dct[name] = value
     self.validate()
     return dct</code></pre>
 </details>
@@ -635,7 +816,15 @@ For ex: <code>fire_data_instance.to_json(indent=4)</code></p>
     errors = []
     for name, obj in attrs:
         value = self.__dict__.get(name)
-        if isinstance(value, FireData):
+        if isinstance(obj, FireData):
+            if obj.__required and value is None:
+                errors.append(ValidationError(name, &#39;FireData attribute not initialized&#39;))
+            elif value is not None:
+                value.validate()
+            elif value is None:
+                # just let it be None
+                pass
+        elif isinstance(value, FireData):
             value.validate()
         else:  # field object
             try:

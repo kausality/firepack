@@ -32,7 +32,7 @@ def test_validation_error_when_required_field_default_value_is_none():
     class Foo(FireData):
         a = IntField(required=True, default=None)
 
-    # When: no value is initialized
+    # When: field value is set to be default None
     f = Foo()
 
     # Then: raise errors
@@ -47,6 +47,34 @@ def test_validation_error_when_required_field_default_value_is_none():
 
     with pytest.raises(MultiValidationError):
         f.to_json()
+
+
+def test_to_dict_not_contains_not_set_field_when_contain_unset_is_false():
+    # Given: required and not required field
+    class Foo(FireData):
+        a = IntField(required=True, default=1)
+        b = StrField(required=False)
+
+    # When: initialized
+    foo = Foo()
+
+    # Then: do not contain not set fields
+    val = {'a': 1}
+    assert foo.to_dict(contain_unset=False) == val
+
+
+def test_to_dict_contains_not_set_field_when_contain_unset_is_true():
+    # Given: required and not required field
+    class Foo(FireData):
+        a = IntField(required=True, default=1)
+        b = StrField(required=False)
+
+    # When: initialized
+    foo = Foo()
+
+    # Then: do not contain not required fields
+    val = {'a': 1, 'b': None}
+    assert foo.to_dict(contain_unset=True) == val
 
 
 def test_validation_error_when_required_field_set_to_none():

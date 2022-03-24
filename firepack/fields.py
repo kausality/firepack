@@ -4,6 +4,8 @@ from datetime import date, datetime
 from firepack import validators
 from firepack.errors import SkipError, ValidationError
 
+_null = object()
+
 
 class Field:
     """Base class for all `Field` types.
@@ -11,11 +13,11 @@ class Field:
     Raises:
         ValidationError: Raised when `Field` value fails validation.
     """ 
-    def __init__(self, required=True, default=None, validators=[], **options):
+    def __init__(self, required=True, default=_null, validators=[], **options):
         """
         Args:
             required (object, optional): Determine whether a value for `Field` is required.
-            default (object, optional): Instantiate `Field` with this value. Defaults to None.
+            default (object, optional): Instantiate `Field` with this default value.
             validators (list, optional): A list of validators to apply. 
             Validators are functions with signature: `validator(name, value)` where `name` is `Field` attribute name and `value` is the provided value.
         """
@@ -37,8 +39,8 @@ class Field:
 
     def __get__(self, instance, instance_type):
         value = instance.__dict__.get(self.name)
-        if value is None:
-            value = self.options['default']
+        if value is _null:
+            return None
         return value
 
     def __set__(self, instance, value):
@@ -47,10 +49,10 @@ class Field:
         instance.__dict__[self.name] = value
 
     def _run_validation(self, value):
-        if self.options['required'] is True and value is None:
-            raise ValidationError(self.name, 'Required field cannot be empty')
-        if self.options['required'] is False and value is None:
-            raise SkipError
+        if self.options['required'] is True and value is _null:
+            raise ValidationError(self.name, 'Required field not set')
+        if self.options['required'] is False and (value is None or value is _null):
+            return
         self.default_validator(value)
         for validator in self.options['validators']:
             validator(self.name, value)
