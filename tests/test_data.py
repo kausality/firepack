@@ -5,7 +5,7 @@ from firepack.fields import IntField, StrField, ListField, DictField
 from firepack.data import FireData
 
 
-def test_validation_errors():
+def test_validation_error_when_required_field_not_initialized():
     # Given: required field
     class Foo(FireData):
         a = IntField(required=True)
@@ -15,10 +15,61 @@ def test_validation_errors():
 
     # Then: raise errors
     with pytest.raises(MultiValidationError):
-        f.to_json()
+        f.validate()
+
+    with pytest.raises(MultiValidationError):
+        f.validate()
 
     with pytest.raises(MultiValidationError):
         f.to_dict()
+
+    with pytest.raises(MultiValidationError):
+        f.to_json()
+
+
+def test_validation_error_when_required_field_default_value_is_none():
+    # Given: required field
+    class Foo(FireData):
+        a = IntField(required=True, default=None)
+
+    # When: no value is initialized
+    f = Foo()
+
+    # Then: raise errors
+    with pytest.raises(MultiValidationError):
+        f.validate()
+
+    with pytest.raises(MultiValidationError):
+        f.validate()
+
+    with pytest.raises(MultiValidationError):
+        f.to_dict()
+
+    with pytest.raises(MultiValidationError):
+        f.to_json()
+
+
+def test_validation_error_when_required_field_set_to_none():
+    # Given: required field
+    class Foo(FireData):
+        a = IntField(required=True)
+
+    # When: no value is initialized
+    f = Foo()
+    f.a = None
+
+    # Then: raise errors
+    with pytest.raises(MultiValidationError):
+        f.validate()
+
+    with pytest.raises(MultiValidationError):
+        f.validate()
+
+    with pytest.raises(MultiValidationError):
+        f.to_dict()
+
+    with pytest.raises(MultiValidationError):
+        f.to_json()
 
 
 def test_valid_to_dict():
