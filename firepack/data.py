@@ -43,7 +43,6 @@ class FireData:
         attrs = instance._get_attrs()
         for name, obj in attrs:
             if isinstance(obj, Field):
-                print('new: ', name, obj.options['default'])
                 instance.__setattr__(name, obj.options['default'])
         return instance
 
@@ -55,7 +54,6 @@ class FireData:
         self.__required = required
 
     def __setattr__(self, name, value):
-        print('setattr: name, value', name, value)
         self.__dict__[name] = value
 
     def __getattr__(self, name):
