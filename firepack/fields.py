@@ -52,7 +52,7 @@ class Field:
         if self.options['required'] is True and value is _null:
             raise ValidationError(self.name, 'Required field not set')
         if self.options['required'] is False and (value is None or value is _null):
-            return
+            raise SkipError
         self.default_validator(value)
         for validator in self.options['validators']:
             validator(self.name, value)
