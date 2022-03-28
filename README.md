@@ -15,7 +15,9 @@ To install FirePack using pip, run: ```pip install git+https://github.com/kpchan
 To install FirePack using pipenv, run: ```pipenv install git+https://github.com/kpchand/firepack.git#egg=firepack```
 
 
-## Basic Usage
+# Basic Usage
+
+## Creating services
 
 ```python
 from firepack.fields import IntField, StrField
@@ -33,7 +35,8 @@ def page_name_validator(name, value):
 class Crawler(FireService):
     # All fields are required by default
     user_id = IntField(min_value=1)
-    page_name = StrField(validators=[page_name_validator])
+    # We use our own custom validator for page name
+    page_name = StrField(validators=[page_name_validator])  
 
     def url(self):
         # Fields are directly accessible using instance __dict__
