@@ -40,14 +40,17 @@ class Crawler(FireService):
         return 'http://example.com/{}/{}'.format(self.user_id, self.page_name)
 
     def pre_fire(self):
+        # This is called before fire. Useful for validation/instantiation
         if self.url() in CRAWLED_DB:
             # Control directly goes to post_fire method
             raise SkipError('Page already crawled!')
     
     def fire(self, **kwargs):
+        # This is the entrypoint of service.
         CRAWLED_DB.append(self.url())
 
     def post_fire(self, fired, exc):
+        # Called after execution of fire. Useful for cleanup operations.
         if fired:
             print('I crawled!')
         else:
@@ -55,6 +58,7 @@ class Crawler(FireService):
 
 
 crawler = Crawler()
+# call() performs fields validation and if everything is in order, it calls fire() method
 crawler.call({
     'user_id': 1,
     'page_name': 'about.html'
