@@ -106,15 +106,25 @@ class BarData(FireData):
     b = FooData()  # nested reference to data object
 
 
-f = FooData()
-f. a = 1
+# Let us assign some values
+foo = FooData()
+foo. a = 1
 
-b = BarData()
-b.a = 2
-b.b = f
+bar = BarData()
+bar.a = 2
+bar.b = foo
 
-ret = b.to_dict()
-print(ret)  # {'a': 2, 'b': {'a': 1}}
+# Serialization: Converting FireData to json string
+json_string = bar.to_json()
+print(json_string)  # {"a": 2, "b": {"a": 1}}
+
+# Deserialization: Loading json string into FireData
+bar = BarData.load(json_string)
+assert bar.a == 2
+assert bar.b.a == 1
+
+# Oh and you can also directly convert FireData instance to python dict
+print(bar.to_dict())  # {'a': 2, 'b': {'a': 1}}
 ```
 
 
