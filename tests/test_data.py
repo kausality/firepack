@@ -1,7 +1,7 @@
 import pytest
 import json
-from firepack.errors import FirePackError, MultiValidationError, ParamError
-from firepack.fields import IntField, StrField, ListField, DictField
+from firepack.errors import *
+from firepack.fields import *
 from firepack.data import FireData
 
 
@@ -432,9 +432,61 @@ def test_required_nested_field_when_not_set_raises_error():
         bar.validate()
 
 
+def test_firedatafield_validation_for_correct_values_not_raises_error():
+    class Foo(FireData):
+        a = IntField()
+
+    class Bar(FireData):
+        a = ListField(FireDataField(Foo))
+
+    foo1 = Foo()
+    foo1.a = 1
+
+    foo2 = Foo()
+    foo2.a = 2
+
+    bar = Bar()
+    bar.a = [foo1, foo2]
+
+    bar.validate()
 
 
+def test_firedatafield_validation_for_incorrect_values_raises_error():
+    class Foo(FireData):
+        a = IntField()
+
+    class Bar(FireData):
+        a = ListField(FireDataField(Foo))
+
+    foo1 = Foo()
+    foo1.a = 1
+
+    bar = Bar()
+    bar.a = [foo1, 2]
+
+    with pytest.raises(MultiValidationError):
+        bar.validate()
 
 
+def test_firedatafield_conversion_is_valid():
+    class Foo(FireData):
+        a = IntField()
+
+    class Bar(FireData):
+        a = ListField(FireDataField(Foo))
+
+    foo1 = Foo()
+    foo1.a = 1
+
+    foo2 = Foo()
+    foo2.a = 2
+
+    bar = Bar()
+    bar.a = [foo1, foo2]
+
+    ret = bar.to_dict()
+
+    assert ret['a'][0].a == 1
+    assert ret['a'][1].a == 2
 
 
