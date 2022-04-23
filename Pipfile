@@ -12,5 +12,3 @@ pdoc3 = "*"
 [packages]
 firepack = {editable = true, path = "."}
 
-[requires]
-python_version = "3.8"
