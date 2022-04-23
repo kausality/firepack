@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>firepack.fields API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -80,7 +80,7 @@ class Field:
         if self.options[&#39;required&#39;] is True and value is _null:
             raise ValidationError(self.name, &#39;Required field not set&#39;)
         if self.options[&#39;required&#39;] is False and (value is None or value is _null):
-            return
+            raise SkipError
         self.default_validator(value)
         for validator in self.options[&#39;validators&#39;]:
             validator(self.name, value)
@@ -228,28 +228,6 @@ class DictField(Field):
             raise ValidationError(self.name, &#39;Not of dict type&#39;)
 
 
-class FireDataField(Field):
-    &#34;&#34;&#34;`Field` which takes a `FireData` type.
-
-    Example:
-        ```python
-            class Foo(FireData):
-                a = IntField()
-
-            field = ListField(FireDataField(Foo))
-            # &#39;field&#39; can now contain a list of &#39;Foo&#39; instances.
-        ```
-    &#34;&#34;&#34;
-    def __init__(self, data_class, **options):
-        super().__init__(**options)
-        self.data_class = data_class
-
-    def default_validator(self, value):
-        if not isinstance(value, self.data_class):
-            raise ValidationError(self.name, &#39;Not of %s type&#39; % self.data_class)
-        value.validate()
-
-
 class ListField(Field):
     &#34;&#34;&#34;`Field` which takes a collection of other Fields.
     &#34;&#34;&#34;
@@ -373,7 +351,7 @@ class ListField(Field):
         if self.options[&#39;required&#39;] is True and value is _null:
             raise ValidationError(self.name, &#39;Required field not set&#39;)
         if self.options[&#39;required&#39;] is False and (value is None or value is _null):
-            return
+            raise SkipError
         self.default_validator(value)
         for validator in self.options[&#39;validators&#39;]:
             validator(self.name, value)
@@ -399,7 +377,6 @@ class ListField(Field):
 <li><a title="firepack.fields.DateTimeField" href="#firepack.fields.DateTimeField">DateTimeField</a></li>
 <li><a title="firepack.fields.DictField" href="#firepack.fields.DictField">DictField</a></li>
 <li><a title="firepack.fields.EmailField" href="#firepack.fields.EmailField">EmailField</a></li>
-<li><a title="firepack.fields.FireDataField" href="#firepack.fields.FireDataField">FireDataField</a></li>
 <li><a title="firepack.fields.ListField" href="#firepack.fields.ListField">ListField</a></li>
 <li><a title="firepack.fields.NumericField" href="#firepack.fields.NumericField">NumericField</a></li>
 <li><a title="firepack.fields.StrField" href="#firepack.fields.StrField">StrField</a></li>
@@ -919,69 +896,6 @@ There is no fool-proof way to confirm a valid email unless an email is sent at t
 </li>
 </ul>
 </dd>
-<dt id="firepack.fields.FireDataField"><code class="flex name class">
-<span>class <span class="ident">FireDataField</span></span>
-<span>(</span><span>data_class, **options)</span>
-</code></dt>
-<dd>
-<div class="desc"><p><code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> which takes a <code>FireData</code> type.</p>
-<h2 id="example">Example</h2>
-<pre><code class="language-python">    class Foo(FireData):
-        a = IntField()
-
-    field = ListField(FireDataField(Foo))
-    # 'field' can now contain a list of 'Foo' instances.
-</code></pre>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>required</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Determine whether a value for <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> is required.</dd>
-<dt><strong><code>default</code></strong> :&ensp;<code>object</code>, optional</dt>
-<dd>Instantiate <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> with this default value.</dd>
-<dt><strong><code>validators</code></strong> :&ensp;<code>list</code>, optional</dt>
-<dd>A list of validators to apply. </dd>
-</dl>
-<p>Validators are functions with signature: <code>validator(name, value)</code> where <code>name</code> is <code><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></code> attribute name and <code>value</code> is the provided value.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class FireDataField(Field):
-    &#34;&#34;&#34;`Field` which takes a `FireData` type.
-
-    Example:
-        ```python
-            class Foo(FireData):
-                a = IntField()
-
-            field = ListField(FireDataField(Foo))
-            # &#39;field&#39; can now contain a list of &#39;Foo&#39; instances.
-        ```
-    &#34;&#34;&#34;
-    def __init__(self, data_class, **options):
-        super().__init__(**options)
-        self.data_class = data_class
-
-    def default_validator(self, value):
-        if not isinstance(value, self.data_class):
-            raise ValidationError(self.name, &#39;Not of %s type&#39; % self.data_class)
-        value.validate()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></li>
-</ul>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="firepack.fields.Field" href="#firepack.fields.Field">Field</a></b></code>:
-<ul class="hlist">
-<li><code><a title="firepack.fields.Field.default_validator" href="#firepack.fields.Field.default_validator">default_validator</a></code></li>
-<li><code><a title="firepack.fields.Field.name" href="#firepack.fields.Field.name">name</a></code></li>
-<li><code><a title="firepack.fields.Field.options" href="#firepack.fields.Field.options">options</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
 <dt id="firepack.fields.ListField"><code class="flex name class">
 <span>class <span class="ident">ListField</span></span>
 <span>(</span><span>item, min_length=None, max_length=None, **options)</span>
@@ -1122,9 +1036,6 @@ for an input value:
 <h4><code><a title="firepack.fields.DictField" href="#firepack.fields.DictField">DictField</a></code></h4>
 </li>
 <li>
-<h4><code><a title="firepack.fields.FireDataField" href="#firepack.fields.FireDataField">FireDataField</a></code></h4>
-</li>
-<li>
 <h4><code><a title="firepack.fields.ListField" href="#firepack.fields.ListField">ListField</a></code></h4>
 </li>
 </ul>
@@ -1133,7 +1044,7 @@ for an input value:
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>

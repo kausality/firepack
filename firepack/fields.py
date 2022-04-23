@@ -200,28 +200,6 @@ class DictField(Field):
             raise ValidationError(self.name, 'Not of dict type')
 
 
-class FireDataField(Field):
-    """`Field` which takes a `FireData` type.
-
-    Example:
-        ```python
-            class Foo(FireData):
-                a = IntField()
-
-            field = ListField(FireDataField(Foo))
-            # 'field' can now contain a list of 'Foo' instances.
-        ```
-    """
-    def __init__(self, data_class, **options):
-        super().__init__(**options)
-        self.data_class = data_class
-
-    def default_validator(self, value):
-        if not isinstance(value, self.data_class):
-            raise ValidationError(self.name, 'Not of %s type' % self.data_class)
-        value.validate()
-
-
 class ListField(Field):
     """`Field` which takes a collection of other Fields.
     """
