@@ -12,8 +12,6 @@ FirePack is a minimalist Python library for creating services, data serializatio
 
 To install FirePack using pip, run: ```pip install git+https://github.com/kpchand/firepack.git```
 
-To install FirePack using pipenv, run: ```pipenv install git+https://github.com/kpchand/firepack.git#egg=firepack```
-
 
 # Basic Usage
 
